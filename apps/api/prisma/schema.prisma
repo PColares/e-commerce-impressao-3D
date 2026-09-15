@@ -1,0 +1,154 @@
+// Prisma schema — Camada
+// Documentação do modelo de dados: ../../../docs/architecture.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  quotes Quote[]
+  orders Order[]
+}
+
+model Material {
+  id              String   @id @default(cuid())
+  name            String   @unique // PLA, PETG, ABS, Resina
+  priceMultiplier Decimal  @db.Decimal(4, 2)
+  active          Boolean  @default(true)
+
+  quotes Quote[]
+}
+
+model LayerHeight {
+  id              String  @id @default(cuid())
+  millimeters     Decimal @unique @db.Decimal(3, 2) // 0.20 / 0.12 / 0.08
+  priceMultiplier Decimal @db.Decimal(4, 2)
+  active          Boolean @default(true)
+
+  quotes Quote[]
+}
+
+model Color {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  hex      String
+  active   Boolean @default(true)
+
+  quotes Quote[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  imageUrl    String?
+  basePrice   Decimal  @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orderItems OrderItem[]
+}
+
+enum QuoteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Quote {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  fileUrl       String
+  fileName      String
+  material      Material    @relation(fields: [materialId], references: [id])
+  materialId    String
+  layerHeight   LayerHeight @relation(fields: [layerHeightId], references: [id])
+  layerHeightId String
+  color         Color       @relation(fields: [colorId], references: [id])
+  colorId       String
+  quantity      Int
+  calculatedPrice Decimal   @db.Decimal(10, 2)
+  status        QuoteStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+
+  order Order?
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  IN_PRODUCTION
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id])
+  userId      String
+  quote       Quote?      @relation(fields: [quoteId], references: [id])
+  quoteId     String?     @unique
+  items       OrderItem[]
+  status      OrderStatus @default(AWAITING_PAYMENT)
+  totalPrice  Decimal     @db.Decimal(10, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  payment Payment?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+}
+
+enum PaymentMethod {
+  PIX
+  BOLETO
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  order                 Order         @relation(fields: [orderId], references: [id])
+  orderId               String        @unique
+  method                PaymentMethod
+  status                PaymentStatus @default(PENDING)
+  mercadoPagoPaymentId  String?       @unique
+  amount                Decimal       @db.Decimal(10, 2)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}

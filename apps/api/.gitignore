@@ -1,0 +1,22 @@
+# compiled output
+/dist
+/src/generated
+*.tsbuildinfo
+
+# dependencies
+node_modules
+
+# environment variables
+.env
+.env.*.local
+
+# logs
+*.log
+
+# testing / coverage
+/coverage
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

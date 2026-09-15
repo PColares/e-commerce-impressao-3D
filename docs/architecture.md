@@ -1,0 +1,93 @@
+# Arquitetura — Camada
+
+Decisões de stack para o e-commerce de impressão 3D sob demanda. Ver também [design-system.md](./design-system.md).
+
+## Stack
+
+### Frontend — `apps/web`
+
+| Camada | Escolha | Motivo |
+|---|---|---|
+| Framework | Vue 3 (Composition API) + TypeScript | Pedido do usuário |
+| Build | Vite | Padrão do ecossistema Vue |
+| Estilo | Tailwind CSS v4 (CSS-first config) | Mesma versão do protótipo; suporta OKLCH nativamente, sem precisar de `tailwind.config.ts` |
+| Roteamento | Vue Router | — |
+| Estado global | Pinia | Carrinho, sessão do usuário, estado do configurador de orçamento |
+| Primitivos de UI | reka-ui + shadcn-vue | Equivalente Vue do Radix/shadcn usado no protótipo — acessibilidade pronta, visual customizável via Tailwind |
+| Ícones | lucide-vue-next | Mesmo set do protótipo |
+| Formulários | vee-validate + zod | Validação tipada, schema compartilhável com o backend |
+| Data fetching | @tanstack/vue-query | Cache/refetch de chamadas à API |
+| Utilitários | VueUse | — |
+| Carrossel | embla-carousel-vue | Mesmo lib do protótipo (catálogo) |
+| Toast | vue-sonner | Equivalente do `sonner` usado no protótipo |
+| Visualização 3D (opcional, fase 2) | three.js + `@tresjs/core` | Preview do STL enviado antes de orçar |
+
+### Backend — `apps/api`
+
+| Camada | Escolha | Motivo |
+|---|---|---|
+| Framework | NestJS (Node.js + TypeScript) | Decisão do usuário — controle total sobre motor de precificação, filas de pedido e integrações |
+| ORM | Prisma | Migrations tipadas, DX excelente com Postgres |
+| Banco de dados | PostgreSQL | Decisão do usuário |
+| Autenticação | Passport (JWT) + refresh token | Login de clientes + área admin |
+| Upload de arquivos 3D | Multer → armazenamento em object storage (S3-compatible: Cloudflare R2 ou AWS S3) | Arquivos STL/3MF/OBJ podem chegar a 200MB — não armazenar em disco/DB |
+| Fila de jobs | BullMQ + Redis | Cálculo assíncrono de orçamento/preparação de slicing, envio de e-mails, geração de nota |
+| Pagamento | SDK oficial Mercado Pago | Decisão do usuário — Pix, boleto e cartão nativos no Brasil |
+| Validação | class-validator / class-transformer (ou zod compartilhado via pacote) | Consistência com o front |
+| Documentação da API | Swagger (`@nestjs/swagger`) | — |
+
+### Monorepo
+
+```
+/
+├── apps/
+│   ├── web/          # Vue 3 + Tailwind
+│   └── api/           # NestJS + Prisma
+├── packages/
+│   └── shared/        # tipos e schemas zod compartilhados (ex: payload de orçamento, enums de material)
+├── docs/
+│   ├── design-system.md
+│   └── architecture.md
+└── pnpm-workspace.yaml
+```
+
+Gerenciador de pacotes: **pnpm** (workspaces nativos, mais rápido que npm para monorepo).
+
+## Modelo de dados inicial (rascunho)
+
+Entidades principais a modelar no Prisma:
+
+- `User` (cliente / admin, roles)
+- `Material` (PLA, PETG, ABS, Resina — com multiplicador de preço)
+- `LayerHeight` (0.20 / 0.12 / 0.08mm — fator de preço)
+- `Color` (paleta de cores disponíveis)
+- `Product` (peças do catálogo pronto)
+- `Quote` (orçamento gerado a partir de upload: arquivo, material, altura de camada, cor, quantidade, preço calculado)
+- `Order` (pedido confirmado, vinculado a um `Quote` ou a `Product`s do catálogo, status de produção/envio)
+- `Payment` (integração com Mercado Pago: id da transação, status, método)
+
+## Hospedagem — Hostinger
+
+Decisão do usuário: hospedar na Hostinger. Como o backend é NestJS + PostgreSQL + Redis (processos long-running, não estático), isso exige um **plano VPS da Hostinger** (KVM), não hospedagem compartilhada — hospedagem compartilhada não roda processos Node persistentes nem Postgres/Redis.
+
+Arquitetura de deploy na VPS:
+
+- **Docker Compose** rodando na VPS com os serviços:
+  - `api` (NestJS, build de produção)
+  - `postgres` (imagem oficial)
+  - `redis` (para BullMQ)
+  - `nginx` (reverse proxy + TLS via Certbot/Let's Encrypt) servindo o build estático do `apps/web` e fazendo proxy de `/api` para o container `api`
+- **Frontend (`apps/web`):** build estático (`vite build`) servido pelo próprio Nginx da VPS junto com a API — um único servidor, sem custo extra de hospedagem separada.
+- **Object storage (arquivos STL/3MF, até 200MB):** a Hostinger não oferece storage S3-compatible — manter em **Cloudflare R2** (tem free tier e sem custo de egress) mesmo com o compute na Hostinger. Alternativa mais simples para começar: volume Docker na própria VPS, migrando para R2 quando o volume de pedidos crescer.
+- **Domínio/DNS:** gerenciado no painel Hostinger, apontando para a VPS.
+- **CI/CD:** GitHub Actions fazendo build + `docker compose pull/up` via SSH na VPS (configurar depois que o deploy manual funcionar).
+
+> Assunção registrada aqui: se o plano contratado for hospedagem compartilhada (não VPS), a arquitetura precisa mudar — API teria que rodar em outro provedor (Railway/Render) e a Hostinger ficaria só com o domínio/frontend estático. Confirmar o tipo de plano antes do primeiro deploy.
+
+## Próximos passos sugeridos
+
+1. Scaffolding do monorepo (pnpm workspaces) com `apps/web` e `apps/api`.
+2. Configurar Tailwind v4 + tokens do design system em `apps/web`.
+3. Modelar schema Prisma inicial e subir Postgres local (Docker).
+4. Portar a landing page/configurador do protótipo para Vue, reaproveitando a lógica de cálculo de preço.
+5. Desenhar as telas que não existem no protótipo: carrinho, checkout (Mercado Pago), página de produto, conta do cliente.
