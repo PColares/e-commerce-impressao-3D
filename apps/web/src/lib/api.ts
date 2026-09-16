@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333/api';
+// Em produção a API é servida pelo mesmo host do front, então o caminho
+// relativo é o padrão seguro: se VITE_API_URL faltar no build, o app continua
+// funcionando em vez de apontar para localhost.
+const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export class ApiError extends Error {
   constructor(

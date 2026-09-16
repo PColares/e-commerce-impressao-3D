@@ -66,23 +66,33 @@ Entidades principais a modelar no Prisma:
 - `Order` (pedido confirmado, vinculado a um `Quote` ou a `Product`s do catálogo, status de produção/envio)
 - `Payment` (integração com Mercado Pago: id da transação, status, método)
 
-## Hospedagem — Hostinger
+## Hospedagem — Hostinger (app Node.js)
 
-Decisão do usuário: hospedar na Hostinger. Como o backend é NestJS + PostgreSQL + Redis (processos long-running, não estático), isso exige um **plano VPS da Hostinger** (KVM), não hospedagem compartilhada — hospedagem compartilhada não roda processos Node persistentes nem Postgres/Redis.
+Decisão tomada em 2026-09-16, depois de ver o painel: o deploy é no produto **"web app em
+Node.js"** da Hostinger (plano Business/Cloud), não em VPS. Isso trocou três coisas do plano
+original:
 
-Arquitetura de deploy na VPS:
+- **Um único processo, não Docker Compose.** O produto implanta um app Node, então o NestJS também
+  serve o build do Vue (`ServeStaticModule`) — um domínio, sem CORS, sem Nginx próprio.
+- **PostgreSQL fica fora da Hostinger.** Esse plano não oferece Postgres (nos docs deles, Postgres
+  só em VPS; aqui o gerenciado é MySQL). Mantivemos Postgres em serviço externo (Neon/Supabase),
+  o que preserva schema, migrations e testes. A alternativa seria migrar o Prisma para MySQL.
+- **Sem Redis.** O BullMQ (ainda não implementado) vai precisar de Upstash ou de outra abordagem.
 
-- **Docker Compose** rodando na VPS com os serviços:
-  - `api` (NestJS, build de produção)
-  - `postgres` (imagem oficial)
-  - `redis` (para BullMQ)
-  - `nginx` (reverse proxy + TLS via Certbot/Let's Encrypt) servindo o build estático do `apps/web` e fazendo proxy de `/api` para o container `api`
-- **Frontend (`apps/web`):** build estático (`vite build`) servido pelo próprio Nginx da VPS junto com a API — um único servidor, sem custo extra de hospedagem separada.
-- **Object storage (arquivos STL/3MF, até 200MB):** a Hostinger não oferece storage S3-compatible — manter em **Cloudflare R2** (tem free tier e sem custo de egress) mesmo com o compute na Hostinger. Alternativa mais simples para começar: volume Docker na própria VPS, migrando para R2 quando o volume de pedidos crescer.
-- **Domínio/DNS:** gerenciado no painel Hostinger, apontando para a VPS.
-- **CI/CD:** GitHub Actions fazendo build + `docker compose pull/up` via SSH na VPS (configurar depois que o deploy manual funcionar).
+O passo a passo, incluindo o empacotamento (`pnpm deploy:bundle` / `pnpm deploy:zip`) e a
+verificação pós-upload, está em [deploy-hostinger.md](./deploy-hostinger.md).
 
-> Assunção registrada aqui: se o plano contratado for hospedagem compartilhada (não VPS), a arquitetura precisa mudar — API teria que rodar em outro provedor (Railway/Render) e a Hostinger ficaria só com o domínio/frontend estático. Confirmar o tipo de plano antes do primeiro deploy.
+Ainda pendente nessa frente:
+
+- **Object storage (arquivos STL/3MF, até 200MB):** a Hostinger não oferece storage S3-compatible;
+  a escolha segue sendo **Cloudflare R2** (free tier, sem custo de egress).
+- **Domínio/DNS:** gerenciado no painel Hostinger.
+- **CI/CD:** hoje o upload é manual, porque o import por Git estava desativado no painel. Quando
+  voltar, dá redeploy automático a cada push.
+
+> Se em algum momento a conta migrar para VPS, o desenho anterior volta a valer e fica melhor:
+> Docker Compose com `api`, `postgres`, `redis` e `nginx` no mesmo servidor, com Postgres e Redis
+> locais em vez de externos.
 
 ## Próximos passos sugeridos
 

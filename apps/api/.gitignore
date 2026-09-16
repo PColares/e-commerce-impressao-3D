@@ -20,3 +20,6 @@ node_modules
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# fixture gerado pelo smoke test de deploy
+/test/__spa-fixture__/

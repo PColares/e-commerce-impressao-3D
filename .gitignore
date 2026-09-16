@@ -10,3 +10,7 @@ Thumbs.db
 
 # Prisma generated client
 src/generated/
+
+# pacote de deploy gerado
+/deploy/
+/camada-deploy.zip

@@ -36,9 +36,17 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Pendente — decisões que precisam de você
 
-1. **Confirmar o plano da Hostinger.** `docs/architecture.md` assume **VPS** (KVM), porque hospedagem compartilhada não roda Node/Postgres/Redis como processo persistente. Se o plano contratado for compartilhado, a arquitetura de deploy muda (API teria que rodar em outro provedor). **Bloqueia:** definir o pipeline de deploy final.
+1. **Criar o Postgres de produção** (Neon ou Supabase, free tier) e guardar a `DATABASE_URL` nas
+   variáveis de ambiente do hPanel. **Bloqueia o deploy:** o plano de app Node.js da Hostinger não
+   oferece Postgres. Ver [deploy-hostinger.md](./deploy-hostinger.md).
 2. **Credenciais do Mercado Pago** (access token de produção/teste) — só precisa quando formos implementar o checkout de verdade.
 3. **Object storage para os arquivos STL** (até 200MB cada): sugestão é Cloudflare R2 (free tier, sem custo de egress). Precisa criar a conta e gerar as chaves de API quando chegarmos nessa etapa — **bloqueia** o upload real (ver limitação acima).
+4. **Token da API Hostinger** (`HOSTINGER_API_TOKEN`) se quiser usar o MCP configurado em
+   `.mcp.json` — ele serve para gerenciar DNS/domínios/app pelo painel, **não** para fazer o
+   deploy. O deploy em si é o upload do zip.
+
+> Resolvido em 2026-09-16: o plano é o produto **"web app em Node.js"** (Business/Cloud), não VPS.
+> Isso já está refletido em `architecture.md` e `deploy-hostinger.md`.
 
 ## Pendente — backend (`apps/api`)
 
@@ -61,11 +69,18 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Pendente — infraestrutura / deploy
 
-- [ ] **Dockerfiles de produção** para `apps/api` (build multi-stage Node) e `apps/web` (build estático + Nginx) — hoje só existe `docker-compose.dev.yml`, que é só para desenvolvimento local (Postgres+Redis).
-- [ ] **`docker-compose.prod.yml`** com os serviços `api`, `postgres`, `redis`, `nginx` (reverse proxy + TLS) para rodar na VPS Hostinger, conforme desenhado em `architecture.md`.
-- [ ] **CI/CD:** GitHub Actions para build + deploy via SSH na VPS.
-- [ ] Configurar domínio/DNS no painel da Hostinger apontando pra VPS.
-- [ ] Trocar `JWT_SECRET` e credenciais do `.env` por valores de produção (nunca reaproveitar os valores de dev que estão em `apps/api/.env.example`).
+- [x] **Pacote de deploy** (`pnpm deploy:bundle` + `pnpm deploy:zip`) gerando um app Node
+      autocontido, validado localmente com `npm install --omit=dev` + `npm start` e com os 21 testes
+      E2E funcionais rodando contra ele. Ver [deploy-hostinger.md](./deploy-hostinger.md).
+- [ ] **Primeiro deploy de verdade:** subir o zip, configurar `DATABASE_URL`/`JWT_SECRET` no hPanel
+      e rodar `prisma migrate deploy` + seed contra o banco de produção.
+- [ ] **CI/CD:** hoje o upload é manual porque o import por Git está desativado no painel da
+      Hostinger. Quando voltar, automatizar o redeploy por push.
+- [ ] Configurar domínio/DNS no painel da Hostinger apontando para o app.
+- [ ] Trocar `JWT_SECRET` e credenciais por valores de produção (nunca reaproveitar os de dev que
+      estão em `apps/api/.env.example`).
+- [ ] Dockerfiles/`docker-compose.prod.yml` só fazem sentido se a conta migrar para VPS — hoje o
+      `docker-compose.dev.yml` é exclusivamente para desenvolvimento local (Postgres+Redis).
 
 ## Notas técnicas para quem for mexer no schema Prisma
 
