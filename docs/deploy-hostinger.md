@@ -91,11 +91,31 @@ Prisma está em `provider = "mysql"` com o adapter `@prisma/adapter-mariadb`, e 
 `docker-compose.dev.yml` sobe MySQL localmente (porta **3307**) para o ambiente de
 desenvolvimento espelhar a produção.
 
-1. hPanel → **Bancos de dados → MySQL** → criar banco. Anote nome do banco, usuário, senha e host.
-2. Monte a URL (no painel, **sem as aspas**):
-   `mysql://USUARIO:SENHA@HOST:3306/NOME_DO_BANCO`
+1. hPanel → **Bancos de dados → MySQL** → criar banco e usuário. A Hostinger prefixa os nomes com o
+   id da conta, então eles saem parecidos: banco `u123456789_camada`, usuário `u123456789_camada`.
+2. Monte a URL. **Senha com caractere especial precisa ser codificada** (`@` → `%40`, `#` → `%23`),
+   senão a URL quebra — este comando monta e codifica para você:
+
+   ```bash
+   pnpm db:check --montar --host=HOST --user=USUARIO --password='SUA_SENHA' --database=BANCO
+   ```
+
+   No painel da Hostinger, cole o valor **sem as aspas**.
 3. Para rodar as migrations da sua máquina, habilite **Bancos de dados → MySQL remoto** e libere o
    seu IP. Sem isso a Hostinger recusa conexões externas e o `migrate deploy` não conecta.
+4. Teste antes de implantar — é bem mais rápido que descobrir pelo 503:
+
+   ```bash
+   pnpm db:check "mysql://usuario:senha@host:3306/banco"
+   ```
+
+   Ele diagnostica os erros comuns: senha recusada, IP não liberado, nome de banco sem o prefixo, e
+   o erro de `RSA public key` do MySQL 8 (que quase sempre é senha errada; se a senha estiver certa,
+   acrescente `?ssl=true` à URL).
+
+> Qual host usar: para o **app** rodando na Hostinger, comece com `localhost` — é o caminho interno e
+> não exige abrir acesso remoto. Se ele não conectar, use o host do "MySQL remoto". Para rodar
+> migrations **da sua máquina**, é sempre o host do MySQL remoto.
 
 ```bash
 cd apps/api

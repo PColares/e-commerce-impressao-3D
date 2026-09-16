@@ -9,6 +9,10 @@
     "test": "pnpm --recursive test",
     "test:e2e": "pnpm --filter web test:e2e",
     "deploy:bundle": "node scripts/build-deploy.mjs",
-    "deploy:zip": "node scripts/zip-deploy.mjs"
+    "deploy:zip": "node scripts/zip-deploy.mjs",
+    "db:check": "node scripts/check-db.mjs"
+  },
+  "devDependencies": {
+    "mariadb": "^3.5.4"
   }
 }
