@@ -29,7 +29,19 @@ run('pnpm --filter api build')
 step('montando deploy/')
 // Remove só o que este script gera. Apagar deploy/ inteiro dá EPERM no Windows
 // quando node_modules tem binários em uso, e preservá-lo deixa o reinstall rápido.
-for (const entry of ['dist', 'public', 'prisma', 'vendor', 'package.json', '.env.example', 'LEIA-ME.md']) {
+// O package-lock.json entra na lista porque o package.json é regerado: um lock
+// de uma geração anterior instalaria dependências erradas (foi o que aconteceu
+// ao trocar o adapter de Postgres para MySQL).
+for (const entry of [
+  'dist',
+  'public',
+  'prisma',
+  'vendor',
+  'package.json',
+  'package-lock.json',
+  '.env.example',
+  'LEIA-ME.md',
+]) {
   rmSync(join(out, entry), { recursive: true, force: true })
 }
 mkdirSync(out, { recursive: true })
