@@ -65,6 +65,24 @@ Por isso `scripts/zip-deploy.mjs` usa o **bsdtar** (`%SystemRoot%\System32\tar.e
 remoto). O script ainda inspeciona o zip gerado e falha se achar qualquer `\` nas entradas, para o
 erro não voltar silenciosamente.
 
+## 503 depois de um build bem-sucedido
+
+Se o build aparece como **Concluído** e o site responde **503**, o processo Node não está de pé —
+não é problema de compilação. A causa que já aconteceu aqui:
+
+**`JWT_SECRET` ausente.** O `AuthModule` resolve o segredo com `getOrThrow`, então sem a variável o
+processo morre durante a inicialização e o proxy devolve 503 sem nenhuma pista na tela. Isso é
+proposital (não se sobe autenticação com segredo improvisado) e está fixado por teste em
+`apps/api/test/required-env.e2e-spec.ts`.
+
+O que **não** derruba o boot: `DATABASE_URL` ausente ou banco fora do ar. O Prisma 7 com driver
+adapter conecta de forma lazy, então o app sobe, serve o frontend, e só as rotas de dados falham
+com 500 (coberto por `apps/api/test/boot-resilience.e2e-spec.ts`). Útil porque Postgres serverless
+como o do Neon suspende por inatividade.
+
+Se o 503 continuar mesmo com as variáveis configuradas, o próximo suspeito é a porta: o app escuta
+em `process.env.PORT ?? 3333`, e o proxy precisa apontar para a porta que ele injeta.
+
 ## Banco de dados
 
 **Este plano não oferece PostgreSQL** — nos docs da Hostinger, Postgres exige VPS; no Business/Cloud

@@ -23,3 +23,4 @@ node_modules
 
 # fixture gerado pelo smoke test de deploy
 /test/__spa-fixture__/
+/test/__spa-boot-fixture__/
