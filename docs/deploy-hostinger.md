@@ -27,7 +27,12 @@ pnpm deploy:zip
 ```
 
 3. hPanel → seu web app Node.js → **Faça upload dos arquivos** → envie `camada-deploy.zip`.
-4. Comando de start: `npm start`.
+4. Na tela "Revisar configurações de compilação":
+   - **Configuração predefinida:** Node.js (ou "Other"/personalizado). **Não** use o preset Vue.js:
+     ele roda `npm run build`, script que não existe no pacote (o build já vem pronto).
+   - **Versão do node:** prefira **22.x**. O `@nestjs/common` depende de `file-type@22`, que pede
+     Node >= 22; com 20.x o `npm install` emite `EBADENGINE`.
+   - **Comando de build:** vazio. **Start:** `npm start`. **Diretório raiz:** `./`.
 5. Configure as variáveis de ambiente **no painel** (nunca dentro do zip):
    - `DATABASE_URL` — Postgres externo, com `sslmode=require`
    - `JWT_SECRET` — valor longo e aleatório, diferente do de desenvolvimento
@@ -37,6 +42,24 @@ pnpm deploy:zip
 > 2026-09-16, com o aviso de usar upload. Quando voltar, vale migrar para ele: dá redeploy
 > automático a cada push. Nesse caso o repositório ainda precisará de um ajuste, porque a raiz do
 > monorepo não é instalável com npm.
+
+## Armadilha do zip (já custou um deploy quebrado)
+
+O `Compress-Archive` do PowerShell grava as entradas do zip com `\` como separador, o que viola a
+spec do ZIP. No Windows parece tudo certo, mas em Linux os caminhos aninhados viram **nomes de
+arquivo literais** — o deploy subiu e morreu com:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../dist/generated/prisma/client.js'
+imported from .../dist/prisma/prisma.service.js
+```
+
+O arquivo estava dentro do zip; o que não existia era a pasta `dist/generated/prisma/`.
+
+Por isso `scripts/zip-deploy.mjs` usa o **bsdtar** (`%SystemRoot%\System32\tar.exe`) e não o
+`Compress-Archive` nem o `tar` do Git Bash (esse é o GNU tar, que interpreta `C:\...` como host
+remoto). O script ainda inspeciona o zip gerado e falha se achar qualquer `\` nas entradas, para o
+erro não voltar silenciosamente.
 
 ## Banco de dados
 
