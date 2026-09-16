@@ -11,8 +11,7 @@ const router = createRouter({
     },
     {
       path: '/orcamento',
-      name: 'orcamento',
-      component: () => import('@/views/OrcamentoView.vue'),
+      redirect: { path: '/', hash: '#orcamento' },
     },
     {
       path: '/login',

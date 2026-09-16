@@ -56,14 +56,17 @@ model Color {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String
-  imageUrl    String?
-  basePrice   Decimal  @db.Decimal(10, 2)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  description      String
+  imageUrl         String?
+  basePrice        Decimal  @db.Decimal(10, 2)
+  material         String? // rótulo de exibição, ex: "PETG" — não é FK para Material
+  layerHeightLabel String? // rótulo de exibição, ex: "0.20mm"
+  specSheet        String? // ficha técnica curta, ex: "12 cm · 48 g · preenchimento 20%"
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
 
   orderItems OrderItem[]
 }

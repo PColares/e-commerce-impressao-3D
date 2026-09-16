@@ -32,18 +32,18 @@ async function main() {
   await Promise.all([
     prisma.layerHeight.upsert({
       where: { millimeters: 0.2 },
-      update: {},
-      create: { millimeters: 0.2, priceMultiplier: 1 },
+      update: { priceMultiplier: 0.85 },
+      create: { millimeters: 0.2, priceMultiplier: 0.85 },
     }),
     prisma.layerHeight.upsert({
       where: { millimeters: 0.12 },
-      update: {},
-      create: { millimeters: 0.12, priceMultiplier: 1.15 },
+      update: { priceMultiplier: 1 },
+      create: { millimeters: 0.12, priceMultiplier: 1 },
     }),
     prisma.layerHeight.upsert({
       where: { millimeters: 0.08 },
-      update: {},
-      create: { millimeters: 0.08, priceMultiplier: 1.35 },
+      update: { priceMultiplier: 1.4 },
+      create: { millimeters: 0.08, priceMultiplier: 1.4 },
     }),
   ]);
 
@@ -72,6 +72,51 @@ async function main() {
       where: { name: 'Verde-oliva' },
       update: {},
       create: { name: 'Verde-oliva', hex: '#6E7C4A' },
+    }),
+  ]);
+
+  await Promise.all([
+    prisma.product.upsert({
+      where: { slug: 'braco-articulado' },
+      update: {},
+      create: {
+        name: 'Braço articulado',
+        slug: 'braco-articulado',
+        description: 'Braço articulado impresso sob demanda, ideal para suportes e protótipos móveis.',
+        imageUrl: '/products/peca-braco-articulado.jpg',
+        basePrice: 89,
+        material: 'PETG',
+        layerHeightLabel: '0.20mm',
+        specSheet: '12 cm · 48 g · preenchimento 20%',
+      },
+    }),
+    prisma.product.upsert({
+      where: { slug: 'suporte-relogio' },
+      update: {},
+      create: {
+        name: 'Suporte de relógio',
+        slug: 'suporte-relogio',
+        description: 'Suporte de precisão em resina para relógios e acessórios.',
+        imageUrl: '/products/peca-suporte-relogio.jpg',
+        basePrice: 142,
+        material: 'Resina',
+        layerHeightLabel: '0.08mm',
+        specSheet: '9 cm · 64 g · alta precisão',
+      },
+    }),
+    prisma.product.upsert({
+      where: { slug: 'suporte-fone' },
+      update: {},
+      create: {
+        name: 'Suporte de fone',
+        slug: 'suporte-fone',
+        description: 'Suporte resistente em ABS para fones de ouvido de mesa.',
+        imageUrl: '/products/peca-suporte-fone.jpg',
+        basePrice: 118,
+        material: 'ABS',
+        layerHeightLabel: '0.20mm',
+        specSheet: '22 cm · 96 g · resistência térmica',
+      },
     }),
   ]);
 

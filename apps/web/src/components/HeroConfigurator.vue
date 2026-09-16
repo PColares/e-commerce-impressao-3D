@@ -1,0 +1,277 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { calculateQuotePrice, allowedModelExtensions, MAX_MODEL_FILE_SIZE_BYTES } from '@camada/shared'
+import { useAuthStore } from '@/stores/auth'
+import { useMaterials, useLayerHeights, useColors } from '@/composables/useCatalog'
+import { api, ApiError } from '@/lib/api'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+const { data: materials } = useMaterials()
+const { data: layerHeights } = useLayerHeights()
+const { data: colors } = useColors()
+
+const file = ref<File | null>(null)
+const fileError = ref<string | null>(null)
+const materialId = ref<string | null>(null)
+const layerHeightId = ref<string | null>(null)
+const colorId = ref<string | null>(null)
+const quantity = ref(3)
+const submitting = ref(false)
+const submitError = ref<string | null>(null)
+const submittedId = ref<string | null>(null)
+
+function selectDefaults() {
+  if (!materialId.value && materials.value?.[0]) materialId.value = materials.value[0].id
+  const defaultLayerHeight = layerHeights.value?.[Math.min(1, (layerHeights.value?.length ?? 1) - 1)]
+  if (!layerHeightId.value && defaultLayerHeight) layerHeightId.value = defaultLayerHeight.id
+  if (!colorId.value && colors.value?.[0]) colorId.value = colors.value[0].id
+}
+
+function onFileChange(event: Event) {
+  fileError.value = null
+  const input = event.target as HTMLInputElement
+  const selected = input.files?.[0] ?? null
+  if (!selected) return
+
+  const extension = '.' + selected.name.split('.').pop()?.toLowerCase()
+  if (!allowedModelExtensions.includes(extension as (typeof allowedModelExtensions)[number])) {
+    fileError.value = `Formato não suportado. Use: ${allowedModelExtensions.join(', ')}`
+    return
+  }
+  if (selected.size > MAX_MODEL_FILE_SIZE_BYTES) {
+    fileError.value = 'Arquivo maior que 200MB.'
+    return
+  }
+  file.value = selected
+  selectDefaults()
+}
+
+const selectedMaterial = computed(() => materials.value?.find((m) => m.id === materialId.value))
+const selectedLayerHeight = computed(() => layerHeights.value?.find((l) => l.id === layerHeightId.value))
+
+const priceBreakdown = computed(() => {
+  const material = selectedMaterial.value ?? materials.value?.[0]
+  const layerHeight = selectedLayerHeight.value ?? layerHeights.value?.[1] ?? layerHeights.value?.[0]
+  if (!material || !layerHeight) return null
+  return calculateQuotePrice(Number(material.priceMultiplier), Number(layerHeight.priceMultiplier), quantity.value)
+})
+
+const installmentValue = computed(() =>
+  priceBreakdown.value ? priceBreakdown.value.totalCard / priceBreakdown.value.installments : 0,
+)
+
+async function onSubmit() {
+  if (!auth.user) {
+    router.push('/login')
+    return
+  }
+  if (!file.value || !materialId.value || !layerHeightId.value || !colorId.value) {
+    fileError.value = fileError.value ?? 'Selecione um arquivo para continuar.'
+    return
+  }
+
+  submitting.value = true
+  submitError.value = null
+  try {
+    // TODO: enviar o arquivo para object storage real (Cloudflare R2/S3) e usar a URL retornada.
+    // Object URL local usado como placeholder enquanto o upload não está implementado (ver docs/pending.md).
+    const fileUrl = URL.createObjectURL(file.value)
+    const quote = await api.post<{ id: string }>('/quotes', {
+      fileName: file.value.name,
+      fileUrl,
+      materialId: materialId.value,
+      layerHeightId: layerHeightId.value,
+      colorId: colorId.value,
+      quantity: quantity.value,
+    })
+    submittedId.value = quote.id
+  } catch (e) {
+    submitError.value = e instanceof ApiError ? e.message : 'Não foi possível gerar o orçamento.'
+  } finally {
+    submitting.value = false
+  }
+}
+</script>
+
+<template>
+  <section class="bg-paper" id="orcamento">
+    <div class="mx-auto grid max-w-[1200px] items-start gap-10 px-6 py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-16">
+      <div class="layer-in">
+        <div class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-copper">
+          <span class="size-1.5 rounded-full bg-copper" /> Impressão sob demanda · Brasil
+        </div>
+        <h1 class="mt-5 max-w-[20ch] text-balance font-sans text-4xl font-semibold leading-none tracking-tight text-ink sm:text-5xl">
+          Cada peça nasce camada por camada.
+        </h1>
+        <p class="mt-5 max-w-[46ch] text-pretty font-sans text-base text-steel/90">
+          Envie seu arquivo em STL ou 3MF, escolha material, cor e resolução — e receba pronto para
+          uso. Sem lote mínimo, sem burocracia. Precificação em reais, Pix com desconto e
+          parcelamento.
+        </p>
+        <div class="mt-7 flex flex-wrap gap-3">
+          <a
+            href="#orcamento"
+            class="rounded-[9px] bg-copper px-4 py-2.5 font-sans text-sm font-medium text-paper ring-1 ring-copper-deep/40 transition-colors hover:bg-copper-deep"
+          >
+            Calcular orçamento
+          </a>
+          <a
+            href="#catalogo"
+            class="rounded-[9px] px-4 py-2.5 font-sans text-sm font-medium text-ink ring-1 ring-ink/15 transition-colors hover:ring-ink/30"
+          >
+            Ver peças prontas
+          </a>
+        </div>
+        <div class="mt-9 overflow-hidden border-y border-line">
+          <div class="flex gap-8 py-3 font-mono text-[11px] uppercase tracking-[0.12em] text-steel/70">
+            <span>Camadas 0.08–0.20mm</span>
+            <span class="text-line">/</span>
+            <span>4 materiais</span>
+            <span class="text-line">/</span>
+            <span>Pix −10%</span>
+            <span class="text-line">/</span>
+            <span>Até 10x</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer-in" style="animation-delay: 0.12s">
+        <div class="overflow-hidden rounded-[16px] bg-cream ring-1 ring-black/5">
+          <div class="flex items-center justify-between border-b border-line bg-cream px-5 py-3.5">
+            <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-ink">Configurador de orçamento</span>
+            <span class="font-mono text-[10px] text-steel/60">estimativa</span>
+          </div>
+
+          <div v-if="submittedId" class="p-5">
+            <p class="font-sans text-sm font-medium text-ink">Orçamento criado com sucesso.</p>
+            <p class="mt-1 font-mono text-[11px] text-steel/60">ID: {{ submittedId }}</p>
+          </div>
+
+          <div v-else class="space-y-5 p-5">
+            <label class="grid cursor-pointer place-items-center rounded-[10px] border border-dashed border-steel/30 bg-paper/60 py-6 text-center">
+              <span class="font-sans text-sm font-medium text-ink">
+                {{ file ? file.name : 'Enviar .stl / .3mf' }}
+              </span>
+              <span class="mt-1 font-mono text-[11px] text-steel/70">até 200MB · análise em 24h</span>
+              <input type="file" :accept="allowedModelExtensions.join(',')" class="hidden" @change="onFileChange" />
+            </label>
+            <p v-if="fileError" class="-mt-3 font-mono text-[11px] text-red-600">{{ fileError }}</p>
+
+            <div>
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Material</span>
+              <div class="mt-2 grid grid-cols-4 gap-2">
+                <button
+                  v-for="material in materials"
+                  :key="material.id"
+                  type="button"
+                  @click="materialId = material.id"
+                  :class="
+                    materialId === material.id
+                      ? 'rounded-[8px] bg-ink py-2 text-center font-sans text-[13px] font-medium text-paper'
+                      : 'rounded-[8px] py-2 text-center font-sans text-[13px] text-steel ring-1 ring-steel/30 transition-colors hover:ring-steel/50'
+                  "
+                >
+                  {{ material.name }}
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Cor</span>
+                <div class="mt-2 flex gap-2">
+                  <button
+                    v-for="color in colors"
+                    :key="color.id"
+                    type="button"
+                    :aria-label="color.name"
+                    @click="colorId = color.id"
+                    :style="{ backgroundColor: color.hex }"
+                    :class="[
+                      'size-6 rounded-full',
+                      colorId === color.id ? 'ring-2 ring-ink ring-offset-2 ring-offset-cream' : 'ring-1 ring-steel/40',
+                    ]"
+                  />
+                </div>
+              </div>
+              <div>
+                <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Camada</span>
+                <div class="mt-2 grid grid-cols-3 gap-2">
+                  <button
+                    v-for="layer in layerHeights"
+                    :key="layer.id"
+                    type="button"
+                    @click="layerHeightId = layer.id"
+                    :class="
+                      layerHeightId === layer.id
+                        ? 'rounded-[7px] bg-ink py-2 text-center font-mono text-[12px] font-medium text-paper'
+                        : 'rounded-[7px] py-2 text-center font-mono text-[12px] text-steel ring-1 ring-steel/30 transition-colors hover:ring-steel/50'
+                    "
+                  >
+                    {{ layer.millimeters }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Quantidade</span>
+              <div class="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  aria-label="Diminuir"
+                  @click="quantity = Math.max(1, quantity - 1)"
+                  class="grid size-9 place-items-center rounded-[8px] font-mono text-sm text-steel ring-1 ring-steel/30 transition-colors hover:ring-steel/50"
+                >
+                  −
+                </button>
+                <span class="w-8 text-center font-mono text-sm text-ink">{{ quantity }}</span>
+                <button
+                  type="button"
+                  aria-label="Aumentar"
+                  @click="quantity = Math.min(999, quantity + 1)"
+                  class="grid size-9 place-items-center rounded-[8px] font-mono text-sm text-steel ring-1 ring-steel/30 transition-colors hover:ring-steel/50"
+                >
+                  +
+                </button>
+                <span class="ml-auto font-mono text-[11px] text-steel/60">prazo 4–6 dias</span>
+              </div>
+            </div>
+
+            <p v-if="submitError" class="font-mono text-[11px] text-red-600">{{ submitError }}</p>
+
+            <div class="flex items-end justify-between rounded-[10px] bg-ink px-5 py-4 text-paper">
+              <div>
+                <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper/50">Estimativa</span>
+                <div v-if="priceBreakdown" class="mt-1 font-sans text-2xl font-semibold leading-none tracking-tight">
+                  R$ {{ priceBreakdown.totalCard.toFixed(2) }}
+                </div>
+                <div v-else class="mt-1 font-sans text-sm text-paper/60">Selecione o material</div>
+                <template v-if="priceBreakdown">
+                  <div class="mt-1.5 font-mono text-[11px] text-copper">
+                    R$ {{ priceBreakdown.totalPix.toFixed(2) }} no Pix · −10%
+                  </div>
+                  <div class="mt-0.5 font-mono text-[11px] text-paper/55">
+                    ou {{ priceBreakdown.installments }}x de R$ {{ installmentValue.toFixed(2) }}
+                  </div>
+                </template>
+              </div>
+              <button
+                type="button"
+                aria-label="Solicitar orçamento"
+                :disabled="submitting"
+                @click="onSubmit"
+                class="grid size-10 place-items-center rounded-[8px] bg-copper font-sans text-sm font-medium text-paper transition-colors hover:bg-copper-deep disabled:opacity-50"
+              >
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>

@@ -19,6 +19,22 @@ export interface Color {
   hex: string
 }
 
+export interface Product {
+  id: string
+  name: string
+  slug: string
+  description: string
+  imageUrl: string | null
+  basePrice: string
+  material: string | null
+  layerHeightLabel: string | null
+  specSheet: string | null
+}
+
+export function useProducts() {
+  return useQuery({ queryKey: ['products'], queryFn: () => api.get<Product[]>('/products') })
+}
+
 export function useMaterials() {
   return useQuery({ queryKey: ['materials'], queryFn: () => api.get<Material[]>('/materials') })
 }
