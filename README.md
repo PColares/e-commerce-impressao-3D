@@ -26,12 +26,12 @@ docs/       # documentação de arquitetura e design system
 
 ## Desenvolvimento
 
-Pré-requisitos: Node.js 20+, pnpm, Docker (para Postgres/Redis locais).
+Pré-requisitos: Node.js 20+, pnpm, Docker (para MySQL/Redis locais).
 
 ```bash
 pnpm install
 
-# subir Postgres (porta 5433) + Redis local
+# subir MySQL (porta 3307) + Redis local
 docker compose -f docker-compose.dev.yml up -d
 
 # aplicar migrations e popular dados de referência (materiais, cores, alturas de camada)

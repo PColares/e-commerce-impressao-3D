@@ -38,7 +38,7 @@ pnpm deploy:zip
      no-op proposital, só para o passo de build do painel não falhar.
    - **Start:** `npm run start`. **Diretório raiz:** `./`. **Diretório de saída:** `dist`.
 5. Configure as variáveis de ambiente **no painel** (nunca dentro do zip):
-   - `DATABASE_URL` — Postgres externo, com `sslmode=require`
+   - `DATABASE_URL` — MySQL criado no hPanel (ver seção de banco de dados)
    - `JWT_SECRET` — valor longo e aleatório, diferente do de desenvolvimento
    - `PORT` — a Hostinger normalmente injeta; o app respeita essa variável
 
@@ -77,27 +77,34 @@ proposital (não se sobe autenticação com segredo improvisado) e está fixado 
 
 O que **não** derruba o boot: `DATABASE_URL` ausente ou banco fora do ar. O Prisma 7 com driver
 adapter conecta de forma lazy, então o app sobe, serve o frontend, e só as rotas de dados falham
-com 500 (coberto por `apps/api/test/boot-resilience.e2e-spec.ts`). Útil porque Postgres serverless
-como o do Neon suspende por inatividade.
+com 500 (coberto por `apps/api/test/boot-resilience.e2e-spec.ts`). Útil porque um banco gerenciado
+pode ficar momentaneamente indisponível sem levar o site inteiro embora.
 
 Se o 503 continuar mesmo com as variáveis configuradas, o próximo suspeito é a porta: o app escuta
 em `process.env.PORT ?? 3333`, e o proxy precisa apontar para a porta que ele injeta.
 
-## Banco de dados
+## Banco de dados — MySQL da Hostinger
 
-**Este plano não oferece PostgreSQL** — nos docs da Hostinger, Postgres exige VPS; no Business/Cloud
-o banco gerenciado é MySQL. Optamos por manter Postgres e hospedá-lo fora (Neon ou Supabase, ambos
-com free tier), o que mantém o schema, as migrations e os testes intactos. A própria Hostinger
-documenta Node + Supabase.
+**Este plano não oferece PostgreSQL** (nos docs da Hostinger, Postgres exige VPS). O banco
+gerenciado é **MySQL**, e o projeto usa MySQL justamente para ficar tudo no mesmo provedor: o
+Prisma está em `provider = "mysql"` com o adapter `@prisma/adapter-mariadb`, e o
+`docker-compose.dev.yml` sobe MySQL localmente (porta **3307**) para o ambiente de
+desenvolvimento espelhar a produção.
 
-Rode as migrations da sua máquina apontando para o banco de produção, assim não é preciso o CLI do
-Prisma no servidor:
+1. hPanel → **Bancos de dados → MySQL** → criar banco. Anote nome do banco, usuário, senha e host.
+2. Monte a URL (no painel, **sem as aspas**):
+   `mysql://USUARIO:SENHA@HOST:3306/NOME_DO_BANCO`
+3. Para rodar as migrations da sua máquina, habilite **Bancos de dados → MySQL remoto** e libere o
+   seu IP. Sem isso a Hostinger recusa conexões externas e o `migrate deploy` não conecta.
 
 ```bash
 cd apps/api
-DATABASE_URL="<url-de-producao>" pnpm exec prisma migrate deploy
-DATABASE_URL="<url-de-producao>" pnpm exec prisma db seed
+DATABASE_URL="mysql://usuario:senha@host:3306/banco" pnpm exec prisma migrate deploy
+DATABASE_URL="mysql://usuario:senha@host:3306/banco" pnpm exec prisma db seed
 ```
+
+> Se preferir não abrir acesso remoto, a alternativa é migrar para VPS, onde há shell para rodar as
+> migrations no próprio servidor (e aí Postgres volta a ser possível).
 
 ## Verificação depois do upload
 

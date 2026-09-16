@@ -1,8 +1,8 @@
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  adapter: new PrismaMariaDb(process.env.DATABASE_URL ?? ''),
 });
 
 async function main() {
@@ -78,10 +78,15 @@ async function main() {
     }),
   ]);
 
+  // createdAt explícito: a vitrine ordena por createdAt desc e, sem isso, os três
+  // produtos criados juntos empatam no milissegundo (MySQL) e a ordem varia.
+  const catalogoBase = new Date('2026-09-01T12:00:00.000Z').getTime();
+  const emOrdem = (posicao: number) => new Date(catalogoBase - posicao * 60_000);
+
   await Promise.all([
     prisma.product.upsert({
       where: { slug: 'braco-articulado' },
-      update: {},
+      update: { createdAt: emOrdem(0) },
       create: {
         name: 'Braço articulado',
         slug: 'braco-articulado',
@@ -91,11 +96,12 @@ async function main() {
         material: 'PETG',
         layerHeightLabel: '0.20mm',
         specSheet: '12 cm · 48 g · preenchimento 20%',
+        createdAt: emOrdem(0),
       },
     }),
     prisma.product.upsert({
       where: { slug: 'suporte-relogio' },
-      update: {},
+      update: { createdAt: emOrdem(1) },
       create: {
         name: 'Suporte de relógio',
         slug: 'suporte-relogio',
@@ -105,11 +111,12 @@ async function main() {
         material: 'Resina',
         layerHeightLabel: '0.08mm',
         specSheet: '9 cm · 64 g · alta precisão',
+        createdAt: emOrdem(1),
       },
     }),
     prisma.product.upsert({
       where: { slug: 'suporte-fone' },
-      update: {},
+      update: { createdAt: emOrdem(2) },
       create: {
         name: 'Suporte de fone',
         slug: 'suporte-fone',
@@ -119,6 +126,7 @@ async function main() {
         material: 'ABS',
         layerHeightLabel: '0.20mm',
         specSheet: '22 cm · 96 g · resistência térmica',
+        createdAt: emOrdem(2),
       },
     }),
   ]);

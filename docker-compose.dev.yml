@@ -1,15 +1,24 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  # MySQL (e não Postgres) porque é o banco gerenciado do plano da Hostinger —
+  # o ambiente local espelha a produção de propósito.
+  mysql:
+    image: mysql:8
     restart: unless-stopped
     environment:
-      POSTGRES_USER: camada
-      POSTGRES_PASSWORD: camada
-      POSTGRES_DB: camada
+      MYSQL_ROOT_PASSWORD: camada
+      MYSQL_DATABASE: camada
+      MYSQL_USER: camada
+      MYSQL_PASSWORD: camada
     ports:
-      - "5433:5432"
+      # 3307 no host: a 3306 já está ocupada por outro projeto na máquina
+      - "3307:3306"
     volumes:
-      - camada-postgres-data:/var/lib/postgresql/data
+      - camada-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-ucamada', '-pcamada']
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   redis:
     image: redis:7-alpine
@@ -18,4 +27,4 @@ services:
       - "6379:6379"
 
 volumes:
-  camada-postgres-data:
+  camada-mysql-data:

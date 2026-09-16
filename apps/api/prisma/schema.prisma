@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 enum Role {
@@ -59,12 +59,14 @@ model Product {
   id               String   @id @default(cuid())
   name             String
   slug             String   @unique
-  description      String
-  imageUrl         String?
+  // @db.Text porque no MySQL o padrão de String é VARCHAR(191), curto demais
+  // para descrições e URLs. Nenhum destes campos é indexado.
+  description      String   @db.Text
+  imageUrl         String?  @db.Text
   basePrice        Decimal  @db.Decimal(10, 2)
   material         String? // rótulo de exibição, ex: "PETG" — não é FK para Material
   layerHeightLabel String? // rótulo de exibição, ex: "0.20mm"
-  specSheet        String? // ficha técnica curta, ex: "12 cm · 48 g · preenchimento 20%"
+  specSheet        String?  @db.Text // ficha técnica curta, ex: "12 cm · 48 g · preenchimento 20%"
   active           Boolean  @default(true)
   createdAt        DateTime @default(now())
 
@@ -81,7 +83,7 @@ model Quote {
   id            String      @id @default(cuid())
   user          User        @relation(fields: [userId], references: [id])
   userId        String
-  fileUrl       String
+  fileUrl       String      @db.Text
   fileName      String
   material      Material    @relation(fields: [materialId], references: [id])
   materialId    String

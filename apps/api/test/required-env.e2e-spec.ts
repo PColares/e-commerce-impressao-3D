@@ -14,7 +14,7 @@ const DIST_ENTRY = join(API_ROOT, 'dist', 'main.js');
 const built = existsSync(DIST_ENTRY);
 
 function bootWithout(variable: string): Promise<{ code: number | null; output: string }> {
-  const env = { ...process.env, PORT: '3406', DATABASE_URL: 'postgresql://x:y@127.0.0.1:59999/z' };
+  const env = { ...process.env, PORT: '3406', DATABASE_URL: 'mysql://x:y@127.0.0.1:59999/z' };
   delete env[variable];
 
   // cwd tem que ser um diretório sem .env: o ConfigModule carrega o .env do

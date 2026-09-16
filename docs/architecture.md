@@ -27,8 +27,8 @@ Decisões de stack para o e-commerce de impressão 3D sob demanda. Ver também [
 | Camada | Escolha | Motivo |
 |---|---|---|
 | Framework | NestJS (Node.js + TypeScript) | Decisão do usuário — controle total sobre motor de precificação, filas de pedido e integrações |
-| ORM | Prisma | Migrations tipadas, DX excelente com Postgres |
-| Banco de dados | PostgreSQL | Decisão do usuário |
+| ORM | Prisma | Migrations tipadas; provider MySQL com o adapter @prisma/adapter-mariadb |
+| Banco de dados | MySQL | É o banco gerenciado do plano da Hostinger (Postgres exige VPS) |
 | Autenticação | Passport (JWT) + refresh token | Login de clientes + área admin |
 | Upload de arquivos 3D | Multer → armazenamento em object storage (S3-compatible: Cloudflare R2 ou AWS S3) | Arquivos STL/3MF/OBJ podem chegar a 200MB — não armazenar em disco/DB |
 | Fila de jobs | BullMQ + Redis | Cálculo assíncrono de orçamento/preparação de slicing, envio de e-mails, geração de nota |
@@ -74,9 +74,10 @@ original:
 
 - **Um único processo, não Docker Compose.** O produto implanta um app Node, então o NestJS também
   serve o build do Vue (`ServeStaticModule`) — um domínio, sem CORS, sem Nginx próprio.
-- **PostgreSQL fica fora da Hostinger.** Esse plano não oferece Postgres (nos docs deles, Postgres
-  só em VPS; aqui o gerenciado é MySQL). Mantivemos Postgres em serviço externo (Neon/Supabase),
-  o que preserva schema, migrations e testes. A alternativa seria migrar o Prisma para MySQL.
+- **MySQL em vez de PostgreSQL.** Esse plano não oferece Postgres (nos docs deles, Postgres só em
+  VPS), e a decisão foi manter tudo na Hostinger em vez de usar um Postgres externo. O Prisma está
+  em `provider = "mysql"` com o adapter `@prisma/adapter-mariadb`, e o ambiente local também roda
+  MySQL para espelhar a produção. Trocar de provider foi barato porque só havia dados de seed.
 - **Sem Redis.** O BullMQ (ainda não implementado) vai precisar de Upstash ou de outra abordagem.
 
 O passo a passo, incluindo o empacotamento (`pnpm deploy:bundle` / `pnpm deploy:zip`) e a
@@ -98,6 +99,6 @@ Ainda pendente nessa frente:
 
 1. Scaffolding do monorepo (pnpm workspaces) com `apps/web` e `apps/api`.
 2. Configurar Tailwind v4 + tokens do design system em `apps/web`.
-3. Modelar schema Prisma inicial e subir Postgres local (Docker).
+3. Modelar schema Prisma inicial e subir MySQL local (Docker).
 4. Portar a landing page/configurador do protótipo para Vue, reaproveitando a lógica de cálculo de preço.
 5. Desenhar as telas que não existem no protótipo: carrinho, checkout (Mercado Pago), página de produto, conta do cliente.

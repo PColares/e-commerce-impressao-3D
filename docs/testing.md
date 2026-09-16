@@ -7,7 +7,7 @@ O desenvolvimento neste projeto é **test-first**: escreva o teste falhando ante
 | Camada | Ferramenta | Onde | O que cobre |
 |---|---|---|---|
 | Unitário | Vitest | `packages/shared`, `apps/web`, `apps/api` | Lógica pura e serviços isolados (Prisma mockado). Roda em ~1s. |
-| E2E | Playwright | `apps/web/e2e/*.spec.ts` | Fluxo real no browser contra a API e o Postgres de verdade. |
+| E2E | Playwright | `apps/web/e2e/*.spec.ts` | Fluxo real no browser contra a API e o MySQL de verdade. |
 | Regressão visual | Playwright (`toHaveScreenshot`) | `apps/web/e2e/visual.spec.ts` | Layout renderizado, comparado pixel a pixel com baselines versionadas. |
 
 Regra prática para não duplicar: se dá para testar como função pura, é unitário; se depende de

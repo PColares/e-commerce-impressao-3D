@@ -46,8 +46,8 @@ describe.skipIf(!built)('boot com banco inacessível', () => {
         ...process.env,
         PORT: String(PORT),
         SPA_DIR,
-        // Porta onde não há Postgres nenhum
-        DATABASE_URL: 'postgresql://ninguem:nada@127.0.0.1:59999/vazio',
+        // Porta onde não há banco nenhum
+        DATABASE_URL: 'mysql://ninguem:nada@127.0.0.1:59999/vazio',
         JWT_SECRET: 'teste-boot',
       },
       stdio: 'ignore',
@@ -78,12 +78,22 @@ describe.skipIf(!built)('boot com banco inacessível', () => {
     expect(response.status).toBe(200);
   });
 
-  it('falha só nas rotas de dados, sem derrubar o processo', async () => {
-    const response = await fetch(`${BASE}/api/materials`);
-    expect(response.status).toBeGreaterThanOrEqual(500);
+  // Timeout acima dos 5s de connectTimeout/acquireTimeout (ver
+  // src/prisma/connection-url.ts): a rota tem que falhar, não pendurar.
+  it(
+    'falha só nas rotas de dados, sem derrubar o processo',
+    async () => {
+      const startedAt = Date.now();
+      const response = await fetch(`${BASE}/api/materials`);
 
-    // e o processo segue vivo depois do erro
-    const afterFailure = await fetch(`${BASE}/`);
-    expect(afterFailure.status).toBe(200);
-  });
+      expect(response.status).toBeGreaterThanOrEqual(500);
+      // se voltar a pendurar indefinidamente, este limite acusa
+      expect(Date.now() - startedAt).toBeLessThan(12_000);
+
+      // e o processo segue vivo depois do erro
+      const afterFailure = await fetch(`${BASE}/`);
+      expect(afterFailure.status).toBe(200);
+    },
+    20_000,
+  );
 });

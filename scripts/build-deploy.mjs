@@ -99,8 +99,8 @@ writeFileSync(
 writeFileSync(
   join(out, '.env.example'),
   [
-    '# Postgres externo (Neon/Supabase) — este plano da Hostinger não oferece Postgres',
-    'DATABASE_URL="postgresql://usuario:senha@host:5432/banco?sslmode=require"',
+    '# MySQL criado no hPanel (Bancos de dados → MySQL). Ao colar no painel, sem aspas.',
+    'DATABASE_URL="mysql://usuario:senha@host:3306/banco"',
     '# Gere um valor longo e aleatório; não reaproveite o de desenvolvimento',
     'JWT_SECRET="troque-por-um-segredo-forte"',
     '# A Hostinger normalmente injeta PORT; deixe o app respeitar essa variável',

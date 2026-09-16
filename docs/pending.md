@@ -7,7 +7,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 ## O que já está pronto
 
 - Monorepo pnpm (`apps/web`, `apps/api`, `packages/shared`).
-- **Backend:** NestJS + Prisma 7 (com driver adapter `@prisma/adapter-pg`, obrigatório nessa versão) + PostgreSQL. Schema completo (`User`, `Material`, `LayerHeight`, `Color`, `Product`, `Quote`, `Order`, `OrderItem`, `Payment`) migrado e populado via seed (`prisma/seed.ts`: PLA ×1/PETG ×1.25/ABS ×1.35/Resina ×1.8, camadas 0.20mm ×0.85/0.12mm ×1/0.08mm ×1.4 — valores conferidos com o protótipo original —, 5 cores, 3 produtos de demonstração com as fotos reais do protótipo).
+- **Backend:** NestJS + Prisma 7 (com driver adapter `@prisma/adapter-mariadb`, obrigatório nessa versão) + MySQL. Schema completo (`User`, `Material`, `LayerHeight`, `Color`, `Product`, `Quote`, `Order`, `OrderItem`, `Payment`) migrado e populado via seed (`prisma/seed.ts`: PLA ×1/PETG ×1.25/ABS ×1.35/Resina ×1.8, camadas 0.20mm ×0.85/0.12mm ×1/0.08mm ×1.4 — valores conferidos com o protótipo original —, 5 cores, 3 produtos de demonstração com as fotos reais do protótipo).
   - **Auth:** `AuthModule` com JWT (`passport-jwt`), `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, guard `JwtAuthGuard` + decorator `@CurrentUser()`. Senhas com bcrypt.
   - **Catálogo:** `GET /api/materials`, `/api/layer-heights`, `/api/colors`, `/api/products` (inclui campos de exibição `material`, `layerHeightLabel`, `specSheet` no `Product`, usados nos cards do catálogo).
   - **Orçamento:** `POST /api/quotes` (protegido), calcula o preço com a mesma lógica de `packages/shared` (`calculateQuotePrice`) e persiste no banco; `GET /api/quotes` e `GET /api/quotes/:id` (só do próprio usuário).
@@ -27,7 +27,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
   - Imagens dos 3 produtos de demonstração copiadas do protótipo para `apps/web/public/products/`.
   - Formatação de moeda/medidas centralizada em `src/lib/format.ts` (`brl()` em pt-BR — `R$ 174,00`, não `R$ 174.00` — e `layerHeightLabel()` para exibir `0.20` em vez de `0.2`). O configurador abre com PLA + camada 0.12mm + qtd 3 pré-selecionados, batendo com a estimativa do protótipo (R$ 174,00 / R$ 156,60 no Pix / 10x de R$ 17,40).
   - `.layer-in` tem `opacity: 0` na base (como no protótipo): sem isso, os elementos com `animation-delay` apareciam por um instante antes de sumir e reanimar. Há também um bloco `prefers-reduced-motion` que desliga animação e scroll suave.
-- **Infra local:** `docker-compose.dev.yml` sobe Postgres (porta **5433**, porque 5432 já está em uso por outro projeto seu) e Redis (porta 6379).
+- **Infra local:** `docker-compose.dev.yml` sobe MySQL (porta **3307**, porque a 3306 já está em uso por outro projeto seu) e Redis (porta 6379). MySQL e não Postgres porque é o banco do plano da Hostinger.
 - Build e typecheck validados: `vue-tsc --build` + `vite build` (web), `nest build` (api). `pnpm dev` sobe os dois em paralelo e foi testado servindo HTML/API reais juntos, incluindo as imagens estáticas do catálogo.
 
 ## Limitação conhecida importante
@@ -36,9 +36,9 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Pendente — decisões que precisam de você
 
-1. **Criar o Postgres de produção** (Neon ou Supabase, free tier) e guardar a `DATABASE_URL` nas
-   variáveis de ambiente do hPanel. **Bloqueia o deploy:** o plano de app Node.js da Hostinger não
-   oferece Postgres. Ver [deploy-hostinger.md](./deploy-hostinger.md).
+1. **Criar o MySQL de produção no hPanel** (Bancos de dados → MySQL), habilitar o **MySQL remoto**
+   para o seu IP e guardar a `DATABASE_URL` nas variáveis de ambiente do painel. **Bloqueia o
+   deploy.** Ver [deploy-hostinger.md](./deploy-hostinger.md).
 2. **Credenciais do Mercado Pago** (access token de produção/teste) — só precisa quando formos implementar o checkout de verdade.
 3. **Object storage para os arquivos STL** (até 200MB cada): sugestão é Cloudflare R2 (free tier, sem custo de egress). Precisa criar a conta e gerar as chaves de API quando chegarmos nessa etapa — **bloqueia** o upload real (ver limitação acima).
 4. **Token da API Hostinger** (`HOSTINGER_API_TOKEN`) se quiser usar o MCP configurado em
@@ -80,7 +80,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [ ] Trocar `JWT_SECRET` e credenciais por valores de produção (nunca reaproveitar os de dev que
       estão em `apps/api/.env.example`).
 - [ ] Dockerfiles/`docker-compose.prod.yml` só fazem sentido se a conta migrar para VPS — hoje o
-      `docker-compose.dev.yml` é exclusivamente para desenvolvimento local (Postgres+Redis).
+      `docker-compose.dev.yml` é exclusivamente para desenvolvimento local (MySQL+Redis).
 
 ## Notas técnicas para quem for mexer no schema Prisma
 
@@ -97,7 +97,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ```bash
 pnpm install
-docker compose -f docker-compose.dev.yml up -d   # Postgres (porta 5433) + Redis
+docker compose -f docker-compose.dev.yml up -d   # MySQL (porta 3307) + Redis
 pnpm --filter @camada/shared build                # se mexer em packages/shared
 pnpm --filter api exec prisma generate            # se mexer no schema.prisma (ver seção acima para migrations)
 pnpm dev                                          # roda web + api em paralelo
