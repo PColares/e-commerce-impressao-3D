@@ -28,11 +28,15 @@ pnpm deploy:zip
 
 3. hPanel → seu web app Node.js → **Faça upload dos arquivos** → envie `camada-deploy.zip`.
 4. Na tela "Revisar configurações de compilação":
-   - **Configuração predefinida:** Node.js (ou "Other"/personalizado). **Não** use o preset Vue.js:
-     ele roda `npm run build`, script que não existe no pacote (o build já vem pronto).
-   - **Versão do node:** prefira **22.x**. O `@nestjs/common` depende de `file-type@22`, que pede
-     Node >= 22; com 20.x o `npm install` emite `EBADENGINE`.
-   - **Comando de build:** vazio. **Start:** `npm start`. **Diretório raiz:** `./`.
+   - **Configuração predefinida: NestJS.** O dropdown é alfabético e costuma abrir já rolado no
+     final (React Router, Svelte, SvelteKit, Vite, Vue.js) — role para cima. Se não achar NestJS,
+     use **Other**. **Nunca Vue.js:** esse preset trata o app como frontend estático.
+   - **Versão do node:** **22.x** (a Hostinger suporta 18, 20, 22 e 24). Em 20.x funciona — foi
+     testado em container `node:20` —, mas o `@nestjs/common` depende de `file-type@22`, que pede
+     Node >= 22 e gera `EBADENGINE` no install.
+   - **Comando de build:** `npm run build` serve. O pacote já sobe compilado, então esse script é um
+     no-op proposital, só para o passo de build do painel não falhar.
+   - **Start:** `npm run start`. **Diretório raiz:** `./`. **Diretório de saída:** `dist`.
 5. Configure as variáveis de ambiente **no painel** (nunca dentro do zip):
    - `DATABASE_URL` — Postgres externo, com `sslmode=require`
    - `JWT_SECRET` — valor longo e aleatório, diferente do de desenvolvimento

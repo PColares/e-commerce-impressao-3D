@@ -82,7 +82,13 @@ writeFileSync(
       // Permissivo de propósito: não sabemos qual Node exato a Hostinger usa,
       // e um engines restritivo faz o npm install falhar no servidor.
       engines: { node: '>=20' },
-      scripts: { start: 'node dist/main.js' },
+      scripts: {
+        // O pacote já sobe compilado, mas os presets do hPanel executam um
+        // comando de build. Sem um script "build" o deploy falha, então este
+        // no-op existe só para esse passo passar.
+        build: 'node -e "console.log(\'pacote já compilado — nada a fazer\')"',
+        start: 'node dist/main.js',
+      },
       dependencies: Object.fromEntries(Object.entries(deps).sort(([a], [b]) => a.localeCompare(b))),
     },
     null,
