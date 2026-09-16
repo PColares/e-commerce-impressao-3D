@@ -27,7 +27,7 @@
           </div>
         </div>
       </div>
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid items-start gap-4 sm:grid-cols-2">
         <figure class="rounded-[14px] bg-paper p-6 ring-1 ring-black/5">
           <div class="font-mono text-[12px] text-copper">★★★★★</div>
           <blockquote class="mt-3 text-pretty font-sans text-[15px] text-ink">

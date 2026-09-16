@@ -6,26 +6,29 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
+  // Renomeia o registro antigo em vez de criar um novo, preservando as FKs dos orçamentos.
+  await prisma.material.updateMany({ where: { name: 'RESINA' }, data: { name: 'Resina' } });
+
   await Promise.all([
     prisma.material.upsert({
       where: { name: 'PLA' },
-      update: {},
+      update: { priceMultiplier: 1 },
       create: { name: 'PLA', priceMultiplier: 1 },
     }),
     prisma.material.upsert({
       where: { name: 'PETG' },
-      update: {},
+      update: { priceMultiplier: 1.25 },
       create: { name: 'PETG', priceMultiplier: 1.25 },
     }),
     prisma.material.upsert({
       where: { name: 'ABS' },
-      update: {},
+      update: { priceMultiplier: 1.35 },
       create: { name: 'ABS', priceMultiplier: 1.35 },
     }),
     prisma.material.upsert({
-      where: { name: 'RESINA' },
-      update: {},
-      create: { name: 'RESINA', priceMultiplier: 1.8 },
+      where: { name: 'Resina' },
+      update: { priceMultiplier: 1.8 },
+      create: { name: 'Resina', priceMultiplier: 1.8 },
     }),
   ]);
 

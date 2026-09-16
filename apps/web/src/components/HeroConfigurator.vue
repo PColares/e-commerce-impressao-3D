@@ -135,14 +135,16 @@ async function onSubmit() {
           </a>
         </div>
         <div class="mt-9 overflow-hidden border-y border-line">
-          <div class="flex gap-8 py-3 font-mono text-[11px] uppercase tracking-[0.12em] text-steel/70">
-            <span>Camadas 0.08–0.20mm</span>
+          <div
+            class="flex flex-wrap items-center gap-x-5 gap-y-1 py-3 font-mono text-[11px] uppercase tracking-[0.12em] text-steel/70 xl:gap-x-8"
+          >
+            <span class="whitespace-nowrap">Camadas 0.08–0.20mm</span>
             <span class="text-line">/</span>
-            <span>4 materiais</span>
+            <span class="whitespace-nowrap">4 materiais</span>
             <span class="text-line">/</span>
-            <span>Pix −10%</span>
+            <span class="whitespace-nowrap">Pix −10%</span>
             <span class="text-line">/</span>
-            <span>Até 10x</span>
+            <span class="whitespace-nowrap">Até 10x</span>
           </div>
         </div>
       </div>
@@ -180,6 +182,7 @@ async function onSubmit() {
                   v-for="material in materials"
                   :key="material.id"
                   type="button"
+                  :aria-pressed="materialId === material.id"
                   @click="materialId = material.id"
                   :class="
                     materialId === material.id
@@ -201,6 +204,7 @@ async function onSubmit() {
                     :key="color.id"
                     type="button"
                     :aria-label="color.name"
+                    :aria-pressed="colorId === color.id"
                     @click="colorId = color.id"
                     :style="{ backgroundColor: color.hex }"
                     :class="[
@@ -217,6 +221,7 @@ async function onSubmit() {
                     v-for="layer in layerHeights"
                     :key="layer.id"
                     type="button"
+                    :aria-pressed="layerHeightId === layer.id"
                     @click="layerHeightId = layer.id"
                     :class="
                       layerHeightId === layer.id

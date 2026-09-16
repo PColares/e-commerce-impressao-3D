@@ -9,7 +9,9 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    // O overlay flutuante do devtools entra nos screenshots e atrapalha os
+    // testes visuais, então fica de fora quando o Playwright sobe o servidor.
+    ...(process.env.PLAYWRIGHT ? [] : [vueDevTools()]),
     tailwindcss(),
   ],
   resolve: {

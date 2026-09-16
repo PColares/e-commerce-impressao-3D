@@ -1,6 +1,8 @@
 # Pendências e Próximos Passos — Camada
 
-Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional. Ver também [architecture.md](./architecture.md) e [design-system.md](./design-system.md).
+Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional. Ver também [architecture.md](./architecture.md), [design-system.md](./design-system.md) e [testing.md](./testing.md).
+
+> O desenvolvimento aqui é **test-first**: teste falhando primeiro, implementação depois. Ver [testing.md](./testing.md).
 
 ## O que já está pronto
 
@@ -46,7 +48,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [ ] **Módulo de Order:** criação de pedido a partir de um `Quote` aprovado ou de itens do catálogo, transições de status (`AWAITING_PAYMENT` → `PAID` → `IN_PRODUCTION` → `SHIPPED` → `DELIVERED`).
 - [ ] **Integração Mercado Pago:** instalar SDK oficial (`mercadopago`), criar preferência de pagamento no checkout, webhook para atualizar `Payment`/`Order` quando o pagamento for aprovado.
 - [ ] **BullMQ:** configurar `BullModule` de fato (só a dependência está instalada, nenhuma fila/processor criado ainda) — ex: e-mail de confirmação, notificar admin de novo orçamento.
-- [ ] **Testes automatizados:** nenhum teste foi escrito ainda para os módulos novos (Auth/Catalog/Quotes); só existe o spec de exemplo do boilerplate Nest.
+- [ ] **Testes do CatalogService:** `AuthService` e `QuotesService` já têm testes unitários; falta cobrir o `CatalogService` (ordenação dos materiais por preço, filtro de `active`).
 
 ## Pendente — frontend (`apps/web`)
 
@@ -55,7 +57,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [ ] **Área do cliente:** lista de orçamentos/pedidos do usuário logado com acompanhamento de status (o backend já expõe `GET /api/quotes`, falta a tela).
 - [ ] **Componentes shadcn-vue restantes:** só `Button` e `Input` foram escritos; os demais listados em `design-system.md` seção 6 (Dialog, Select, Tabs, Toast via `vue-sonner` etc.) ainda não existem — o layout usa HTML/Tailwind cru em vários pontos (ex: chips de material/cor no configurador, select de ordenação no catálogo).
 - [ ] Favicon customizado (hoje é o placeholder do `create-vue`).
-- [ ] Vitest não foi configurado no frontend (optou-se por não incluir na criação do projeto) — decidir se vale adicionar testes de componente.
+- [ ] **Testes de componente:** o front tem Vitest configurado e testes de `lib/format` e da store `auth`, mas nenhum teste de componente com `@vue/test-utils` (a dependência já está instalada) — hoje o comportamento de UI é coberto pelo E2E.
 
 ## Pendente — infraestrutura / deploy
 

@@ -11,6 +11,8 @@ Monorepo do e-commerce de impressão 3D sob demanda "Camada".
 
 Detalhes completos em [docs/architecture.md](docs/architecture.md) e [docs/design-system.md](docs/design-system.md). Estado atual do projeto e próximos passos em [docs/pending.md](docs/pending.md).
 
+Desenvolvimento é **test-first** — como rodar e escrever os testes está em [docs/testing.md](docs/testing.md).
+
 ## Estrutura
 
 ```
@@ -38,6 +40,10 @@ pnpm --filter api exec prisma db seed
 
 # rodar web + api em paralelo
 pnpm dev
+
+# testes
+pnpm test        # unitários (shared + web + api)
+pnpm test:e2e    # E2E + regressão visual no browser
 ```
 
 Web em `http://localhost:5173`, API em `http://localhost:3333/api`, Swagger em `http://localhost:3333/api/docs`.

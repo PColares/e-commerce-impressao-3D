@@ -46,6 +46,7 @@ const filteredProducts = computed(() => {
         <span class="mr-2 font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Material</span>
         <button
           type="button"
+          :aria-pressed="selectedMaterial === null"
           @click="selectedMaterial = null"
           :class="[
             'rounded-[8px] px-3 py-1.5 font-mono text-[12px] transition-colors',
@@ -58,6 +59,7 @@ const filteredProducts = computed(() => {
           v-for="material in materials"
           :key="material"
           type="button"
+          :aria-pressed="selectedMaterial === material"
           @click="selectedMaterial = material"
           :class="[
             'rounded-[8px] px-3 py-1.5 font-mono text-[12px] transition-colors',

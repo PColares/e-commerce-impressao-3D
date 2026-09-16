@@ -5,8 +5,13 @@ import { PrismaService } from '../prisma/prisma.service.js';
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Ordenado do mais barato para o mais caro: o configurador usa o primeiro
+  // item como padrão e essa é a ordem dos chips no design (PLA, PETG, ABS, Resina).
   materials() {
-    return this.prisma.material.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+    return this.prisma.material.findMany({
+      where: { active: true },
+      orderBy: { priceMultiplier: 'asc' },
+    });
   }
 
   layerHeights() {
