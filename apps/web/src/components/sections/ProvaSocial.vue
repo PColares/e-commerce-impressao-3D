@@ -1,7 +1,5 @@
-<script setup lang="ts"></script>
-
 <template>
-  <section id="prova" class="border-t border-line bg-cream">
+  <section id="prova" class="scroll-mt-4 border-t border-line bg-cream">
     <div class="mx-auto grid max-w-[1200px] gap-10 px-6 py-14 lg:grid-cols-[1fr_1.2fr] lg:py-20">
       <div>
         <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-copper">Prova social</span>

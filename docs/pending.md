@@ -13,7 +13,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
   - Testado ponta a ponta via curl: registro → login → listar catálogo → criar orçamento → preço batendo (R$58 × material × altura de camada × qtd).
 - **`packages/shared`:** enums/tipos de domínio + `calculateQuotePrice()` (fórmula de precificação, única fonte da verdade usada tanto no back quanto no front) + schema zod `quoteRequestSchema`, compilado via `tsc` para `dist/`.
 - **Frontend:** Vue 3 + TS + Vite + Tailwind v4 com os tokens do design system. A Home (`/`) é uma réplica fiel do protótipo Lovable (`camada-codigo-fonte`), remontada como página única com âncoras, e não mais uma tela genérica:
-  - `AppHeader` — nav idêntica ao protótipo (Orçamento/Catálogo/Como funciona/Prova via âncora `/#...`) + CTA "Enviar arquivo", com a parte de auth (Entrar/nome do usuário/Sair) adicionada à direita.
+  - `AppHeader` — nav idêntica ao protótipo (Orçamento/Catálogo/Como funciona/Prova, todos rolando para as seções da home) + CTA "Enviar arquivo", com a parte de auth (Entrar/nome do usuário/Sair) à direita e menu hambúrguer no mobile. Os links usam `RouterLink` com hash (não `<a href>`), então navegar de `/catalogo` para uma seção da home não recarrega o SPA; o `scrollBehavior` do router faz a rolagem até a âncora.
   - `HeroConfigurator` (`#orcamento`) — hero + card do configurador lado a lado, pixel-a-pixel com o protótipo (dropzone tracejada, chips de material em grid de 4, swatches de cor com ring, chips de camada, stepper de quantidade, painel de preço escuro com botão de seta), mas **funcional de verdade**: material/altura de camada/cor vêm da API, preço calculado com `@camada/shared`, submit cria o orçamento via `POST /api/quotes` (exige login).
   - `ComoFunciona` (`#como`), `ProvaSocial` (`#prova`) — conteúdo estático igual ao protótipo.
   - `CatalogoTeaser` (`#catalogo`) — mostra os 3 primeiros produtos da API no mesmo estilo de card do protótipo, com botão **"Ver catálogo completo"** que leva para `/catalogo`.
@@ -23,6 +23,8 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
   - Componentes em `src/components/ui` (`Button`, `Input`), `src/components/layout` (`AppHeader`, `AppFooter`), `src/components/sections` (`ComoFunciona`, `CatalogoTeaser`, `ProvaSocial`), `src/components/HeroConfigurator.vue`, `src/components/ProductCard.vue`.
   - `@tanstack/vue-query` em uso (`src/composables/useCatalog.ts`) para os fetches de referência e produtos.
   - Imagens dos 3 produtos de demonstração copiadas do protótipo para `apps/web/public/products/`.
+  - Formatação de moeda/medidas centralizada em `src/lib/format.ts` (`brl()` em pt-BR — `R$ 174,00`, não `R$ 174.00` — e `layerHeightLabel()` para exibir `0.20` em vez de `0.2`). O configurador abre com PLA + camada 0.12mm + qtd 3 pré-selecionados, batendo com a estimativa do protótipo (R$ 174,00 / R$ 156,60 no Pix / 10x de R$ 17,40).
+  - `.layer-in` tem `opacity: 0` na base (como no protótipo): sem isso, os elementos com `animation-delay` apareciam por um instante antes de sumir e reanimar. Há também um bloco `prefers-reduced-motion` que desliga animação e scroll suave.
 - **Infra local:** `docker-compose.dev.yml` sobe Postgres (porta **5433**, porque 5432 já está em uso por outro projeto seu) e Redis (porta 6379).
 - Build e typecheck validados: `vue-tsc --build` + `vite build` (web), `nest build` (api). `pnpm dev` sobe os dois em paralelo e foi testado servindo HTML/API reais juntos, incluindo as imagens estáticas do catálogo.
 
@@ -52,7 +54,6 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [ ] **Checkout:** tela de finalização de compra integrando a preferência de pagamento do Mercado Pago (depende do backend implementar isso primeiro).
 - [ ] **Área do cliente:** lista de orçamentos/pedidos do usuário logado com acompanhamento de status (o backend já expõe `GET /api/quotes`, falta a tela).
 - [ ] **Componentes shadcn-vue restantes:** só `Button` e `Input` foram escritos; os demais listados em `design-system.md` seção 6 (Dialog, Select, Tabs, Toast via `vue-sonner` etc.) ainda não existem — o layout usa HTML/Tailwind cru em vários pontos (ex: chips de material/cor no configurador, select de ordenação no catálogo).
-- [ ] **Menu mobile:** o `AppHeader` esconde a nav em telas pequenas (`hidden md:flex`, igual ao protótipo) mas não tem um menu hambúrguer alternativo — em mobile hoje só sobra logo + Entrar/CTA.
 - [ ] Favicon customizado (hoje é o placeholder do `create-vue`).
 - [ ] Vitest não foi configurado no frontend (optou-se por não incluir na criação do projeto) — decidir se vale adicionar testes de componente.
 

@@ -26,6 +26,14 @@
 }
 
 @layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-paper text-ink font-sans antialiased;
   }
@@ -38,10 +46,23 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
+/* opacity: 0 na base evita o flash de conteúdo visível durante o animation-delay */
 .layer-in {
+  opacity: 0;
   animation: fadeUp 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .layer-in {
+    opacity: 1;
+    animation: none;
+  }
 }

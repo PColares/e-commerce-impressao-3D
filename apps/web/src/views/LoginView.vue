@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/lib/api'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
 import Input from '@/components/ui/Input.vue'
 import Button from '@/components/ui/Button.vue'
 
@@ -20,7 +21,7 @@ async function onSubmit() {
   loading.value = true
   try {
     await auth.login({ email: email.value, password: password.value })
-    router.push('/orcamento')
+    router.push({ path: '/', hash: '#orcamento' })
   } catch (e) {
     error.value = e instanceof ApiError ? e.message : 'Não foi possível entrar.'
   } finally {
@@ -30,20 +31,46 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-paper text-ink">
+  <div class="flex min-h-screen flex-col bg-paper text-ink">
     <AppHeader />
-    <main class="mx-auto max-w-md px-6 py-16">
-      <h1 class="text-2xl sm:text-3xl font-semibold leading-none tracking-tight mb-8">Entrar</h1>
-      <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
-        <Input v-model="email" type="email" placeholder="E-mail" required />
-        <Input v-model="password" type="password" placeholder="Senha" required />
-        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
-        <Button type="submit" :disabled="loading">{{ loading ? 'Entrando…' : 'Entrar' }}</Button>
-      </form>
-      <p class="mt-6 text-sm text-steel">
-        Não tem conta?
-        <RouterLink to="/registro" class="text-copper hover:underline">Cadastre-se</RouterLink>
-      </p>
+
+    <main class="flex flex-1 items-center justify-center px-6 py-16">
+      <div class="layer-in w-full max-w-[400px]">
+        <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-copper">Sua conta</span>
+        <h1 class="mt-2 font-sans text-2xl font-semibold leading-none tracking-tight sm:text-3xl">Entrar</h1>
+        <p class="mt-3 text-pretty font-sans text-sm text-steel/90">
+          Acesse para confirmar orçamentos e acompanhar seus pedidos.
+        </p>
+
+        <form class="mt-7 rounded-[16px] bg-cream p-5 ring-1 ring-black/5" @submit.prevent="onSubmit">
+          <div class="flex flex-col gap-3">
+            <label class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70" for="email">
+              E-mail
+            </label>
+            <Input id="email" v-model="email" type="email" placeholder="seu@email.com" required />
+
+            <label class="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70" for="password">
+              Senha
+            </label>
+            <Input id="password" v-model="password" type="password" placeholder="••••••••" required />
+          </div>
+
+          <p v-if="error" class="mt-4 font-mono text-[11px] text-red-600">{{ error }}</p>
+
+          <Button type="submit" class="mt-5 w-full" :disabled="loading">
+            {{ loading ? 'Entrando…' : 'Entrar' }}
+          </Button>
+        </form>
+
+        <p class="mt-5 font-sans text-sm text-steel">
+          Não tem conta?
+          <RouterLink to="/registro" class="text-copper transition-colors hover:text-copper-deep">
+            Cadastre-se
+          </RouterLink>
+        </p>
+      </div>
     </main>
+
+    <AppFooter />
   </div>
 </template>

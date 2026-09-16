@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { calculateQuotePrice, allowedModelExtensions, MAX_MODEL_FILE_SIZE_BYTES } from '@camada/shared'
 import { useAuthStore } from '@/stores/auth'
 import { useMaterials, useLayerHeights, useColors } from '@/composables/useCatalog'
 import { api, ApiError } from '@/lib/api'
+import { brl, layerHeightLabel } from '@/lib/format'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -23,12 +24,19 @@ const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const submittedId = ref<string | null>(null)
 
-function selectDefaults() {
+// Pré-seleciona PLA, camada 0.12mm e a primeira cor assim que os dados chegam,
+// para o card já abrir com uma estimativa coerente (igual ao protótipo).
+watchEffect(() => {
   if (!materialId.value && materials.value?.[0]) materialId.value = materials.value[0].id
-  const defaultLayerHeight = layerHeights.value?.[Math.min(1, (layerHeights.value?.length ?? 1) - 1)]
-  if (!layerHeightId.value && defaultLayerHeight) layerHeightId.value = defaultLayerHeight.id
+
+  if (!layerHeightId.value && layerHeights.value?.length) {
+    const preferred =
+      layerHeights.value.find((l) => Number(l.millimeters) === 0.12) ?? layerHeights.value[0]
+    if (preferred) layerHeightId.value = preferred.id
+  }
+
   if (!colorId.value && colors.value?.[0]) colorId.value = colors.value[0].id
-}
+})
 
 function onFileChange(event: Event) {
   fileError.value = null
@@ -46,17 +54,18 @@ function onFileChange(event: Event) {
     return
   }
   file.value = selected
-  selectDefaults()
 }
 
 const selectedMaterial = computed(() => materials.value?.find((m) => m.id === materialId.value))
 const selectedLayerHeight = computed(() => layerHeights.value?.find((l) => l.id === layerHeightId.value))
 
 const priceBreakdown = computed(() => {
-  const material = selectedMaterial.value ?? materials.value?.[0]
-  const layerHeight = selectedLayerHeight.value ?? layerHeights.value?.[1] ?? layerHeights.value?.[0]
-  if (!material || !layerHeight) return null
-  return calculateQuotePrice(Number(material.priceMultiplier), Number(layerHeight.priceMultiplier), quantity.value)
+  if (!selectedMaterial.value || !selectedLayerHeight.value) return null
+  return calculateQuotePrice(
+    Number(selectedMaterial.value.priceMultiplier),
+    Number(selectedLayerHeight.value.priceMultiplier),
+    quantity.value,
+  )
 })
 
 const installmentValue = computed(() =>
@@ -97,7 +106,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <section class="bg-paper" id="orcamento">
+  <section id="orcamento" class="scroll-mt-4 bg-paper">
     <div class="mx-auto grid max-w-[1200px] items-start gap-10 px-6 py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-16">
       <div class="layer-in">
         <div class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-copper">
@@ -113,7 +122,7 @@ async function onSubmit() {
         </p>
         <div class="mt-7 flex flex-wrap gap-3">
           <a
-            href="#orcamento"
+            href="#configurador"
             class="rounded-[9px] bg-copper px-4 py-2.5 font-sans text-sm font-medium text-paper ring-1 ring-copper-deep/40 transition-colors hover:bg-copper-deep"
           >
             Calcular orçamento
@@ -138,7 +147,7 @@ async function onSubmit() {
         </div>
       </div>
 
-      <div class="layer-in" style="animation-delay: 0.12s">
+      <div id="configurador" class="layer-in scroll-mt-6" style="animation-delay: 0.12s">
         <div class="overflow-hidden rounded-[16px] bg-cream ring-1 ring-black/5">
           <div class="flex items-center justify-between border-b border-line bg-cream px-5 py-3.5">
             <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-ink">Configurador de orçamento</span>
@@ -151,14 +160,18 @@ async function onSubmit() {
           </div>
 
           <div v-else class="space-y-5 p-5">
-            <label class="grid cursor-pointer place-items-center rounded-[10px] border border-dashed border-steel/30 bg-paper/60 py-6 text-center">
-              <span class="font-sans text-sm font-medium text-ink">
-                {{ file ? file.name : 'Enviar .stl / .3mf' }}
-              </span>
-              <span class="mt-1 font-mono text-[11px] text-steel/70">até 200MB · análise em 24h</span>
-              <input type="file" :accept="allowedModelExtensions.join(',')" class="hidden" @change="onFileChange" />
-            </label>
-            <p v-if="fileError" class="-mt-3 font-mono text-[11px] text-red-600">{{ fileError }}</p>
+            <div>
+              <label
+                class="grid cursor-pointer place-items-center rounded-[10px] border border-dashed border-steel/30 bg-paper/60 px-4 py-6 text-center transition-colors hover:border-steel/50"
+              >
+                <span class="max-w-full truncate font-sans text-sm font-medium text-ink">
+                  {{ file ? file.name : 'Enviar .stl / .3mf' }}
+                </span>
+                <span class="mt-1 font-mono text-[11px] text-steel/70">até 200MB · análise em 24h</span>
+                <input type="file" :accept="allowedModelExtensions.join(',')" class="hidden" @change="onFileChange" />
+              </label>
+              <p v-if="fileError" class="mt-2 font-mono text-[11px] text-red-600">{{ fileError }}</p>
+            </div>
 
             <div>
               <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-steel/70">Material</span>
@@ -211,7 +224,7 @@ async function onSubmit() {
                         : 'rounded-[7px] py-2 text-center font-mono text-[12px] text-steel ring-1 ring-steel/30 transition-colors hover:ring-steel/50'
                     "
                   >
-                    {{ layer.millimeters }}
+                    {{ layerHeightLabel(layer.millimeters) }}
                   </button>
                 </div>
               </div>
@@ -247,15 +260,15 @@ async function onSubmit() {
               <div>
                 <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper/50">Estimativa</span>
                 <div v-if="priceBreakdown" class="mt-1 font-sans text-2xl font-semibold leading-none tracking-tight">
-                  R$ {{ priceBreakdown.totalCard.toFixed(2) }}
+                  {{ brl(priceBreakdown.totalCard) }}
                 </div>
-                <div v-else class="mt-1 font-sans text-sm text-paper/60">Selecione o material</div>
+                <div v-else class="mt-1 font-sans text-sm text-paper/60">Carregando…</div>
                 <template v-if="priceBreakdown">
                   <div class="mt-1.5 font-mono text-[11px] text-copper">
-                    R$ {{ priceBreakdown.totalPix.toFixed(2) }} no Pix · −10%
+                    {{ brl(priceBreakdown.totalPix) }} no Pix · −10%
                   </div>
                   <div class="mt-0.5 font-mono text-[11px] text-paper/55">
-                    ou {{ priceBreakdown.installments }}x de R$ {{ installmentValue.toFixed(2) }}
+                    ou {{ priceBreakdown.installments }}x de {{ brl(installmentValue) }}
                   </div>
                 </template>
               </div>

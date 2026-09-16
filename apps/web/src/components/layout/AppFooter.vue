@@ -34,7 +34,11 @@ const currentYear = new Date().getFullYear()
         <div>
           <h4 class="font-mono text-[11px] uppercase tracking-[0.16em] text-paper/40">Produtos</h4>
           <ul class="mt-4 space-y-2.5 font-sans text-sm text-paper/70">
-            <li><a href="/#orcamento" class="transition-colors hover:text-copper">Orçamento sob medida</a></li>
+            <li>
+              <RouterLink :to="{ path: '/', hash: '#orcamento' }" class="transition-colors hover:text-copper">
+                Orçamento sob medida
+              </RouterLink>
+            </li>
             <li><RouterLink to="/catalogo" class="transition-colors hover:text-copper">Peças prontas</RouterLink></li>
             <li>Materiais e cores</li>
             <li>Tabela de prazos</li>
