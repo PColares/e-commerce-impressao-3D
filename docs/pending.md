@@ -41,9 +41,10 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
    deploy.** Ver [deploy-hostinger.md](./deploy-hostinger.md).
 2. **Credenciais do Mercado Pago** (access token de produção/teste) — só precisa quando formos implementar o checkout de verdade.
 3. **Object storage para os arquivos STL** (até 200MB cada): sugestão é Cloudflare R2 (free tier, sem custo de egress). Precisa criar a conta e gerar as chaves de API quando chegarmos nessa etapa — **bloqueia** o upload real (ver limitação acima).
-4. **Token da API Hostinger** (`HOSTINGER_API_TOKEN`) se quiser usar o MCP configurado em
-   `.mcp.json` — ele serve para gerenciar DNS/domínios/app pelo painel, **não** para fazer o
-   deploy. O deploy em si é o upload do zip.
+4. ~~**Token da API Hostinger**~~ — resolvido em 2026-09-21 com a extensão **Hostinger Connector**
+   do VS Code ("Hostinger: Set API Token"), que registra os servidores MCP no `~/.claude.json`. O
+   `.mcp.json` do projeto foi removido: ele definia servidores com os mesmos nomes, lendo uma
+   variável de ambiente vazia, e por ter precedência deixava o MCP respondendo 401.
 
 > Resolvido em 2026-09-16: o plano é o produto **"web app em Node.js"** (Business/Cloud), não VPS.
 > Isso já está refletido em `architecture.md` e `deploy-hostinger.md`.
