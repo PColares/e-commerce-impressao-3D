@@ -21,7 +21,7 @@ function bootViaRequire(): Promise<{ started: boolean; output: string }> {
     JWT_SECRET: 'segredo-de-teste',
     DATABASE_URL: 'mysql://x:y@127.0.0.1:59999/z',
   };
-  const isolatedCwd = mkdtempSync(join(tmpdir(), 'camada-require-'));
+  const isolatedCwd = mkdtempSync(join(tmpdir(), 'crealio-require-'));
 
   return new Promise((resolve) => {
     const child = spawn(process.execPath, ['-e', `require(${JSON.stringify(DIST_ENTRY)})`], {

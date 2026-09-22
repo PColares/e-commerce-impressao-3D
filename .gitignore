@@ -13,5 +13,5 @@ src/generated/
 
 # pacote de deploy gerado
 /deploy/
-/camada-deploy.zip
+/crealio-deploy.zip
 /.deploy-linux-test/

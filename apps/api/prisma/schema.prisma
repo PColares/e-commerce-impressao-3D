@@ -1,4 +1,4 @@
-// Prisma schema — Camada
+// Prisma schema — Crealio
 // Documentação do modelo de dados: ../../../docs/architecture.md
 
 generator client {

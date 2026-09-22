@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('camada.token');
+  const token = localStorage.getItem('crealio.token');
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,

@@ -10,7 +10,6 @@ const sections = [
   { label: 'Orçamento', hash: '#orcamento' },
   { label: 'Catálogo', hash: '#catalogo' },
   { label: 'Como funciona', hash: '#como' },
-  { label: 'Prova', hash: '#prova' },
 ]
 </script>
 
@@ -18,13 +17,9 @@ const sections = [
   <header class="border-b border-line bg-paper">
     <div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-6">
       <RouterLink to="/" class="flex flex-1 basis-0 items-center gap-2.5">
-        <span
-          class="grid size-7 shrink-0 place-items-center rounded-[8px] bg-ink font-mono text-[11px] font-semibold tracking-tight text-paper"
-        >
-          C
-        </span>
+        <img src="/apple-touch-icon.png" alt="" class="size-7 shrink-0 rounded-[8px]" />
         <span class="font-sans text-[15px] font-semibold tracking-tight text-ink">
-          Camada<span class="text-copper">.</span>
+          Crealio<span class="text-copper">.</span>
         </span>
         <span class="mt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-steel/60">3D</span>
       </RouterLink>

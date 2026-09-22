@@ -172,7 +172,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@camada/shared':
+      '@crealio/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@nestjs/bullmq':
@@ -293,7 +293,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@camada/shared':
+      '@crealio/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@tailwindcss/vite':

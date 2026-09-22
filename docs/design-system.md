@@ -1,15 +1,15 @@
-# Design System — Camada (E-commerce de Impressão 3D sob Demanda)
+# Design System — Crealio (E-commerce de Impressão 3D sob Demanda)
 
 > Extraído e adaptado do protótipo Lovable em `camada-codigo-fonte` (React + TanStack Start + Tailwind v4).
 > Este documento é a fonte da verdade visual para a reconstrução em Vue 3 + Tailwind CSS.
 
 ## 1. Marca
 
-- **Nome:** Camada
+- **Nome:** Crealio (até 2026-09-22 era "Camada"; trocado porque já havia lojas com esse nome)
 - **Tagline:** "Cada peça nasce camada por camada."
 - **Posicionamento:** Impressão 3D sob demanda no Brasil. Copy 100% pt-BR, preços em BRL.
 - **Tom de voz:** direto, técnico-artesanal, confiante. Nada de emojis ou tom "startup fofo".
-- **Logo:** avatar quadrado sólido (`bg-ink` no header claro, `bg-paper` no footer escuro) com a letra "C" em mono, ao lado do wordmark "Camada" + um ponto final na cor copper. Tag pequena "3D" em mono ao lado do logo.
+- **Logo:** o próprio favicon (`public/apple-touch-icon.png`: "C" cursivo em Leckerli One, branco sobre quadrado preto arredondado), ao lado do wordmark "Crealio" + um ponto final na cor copper. Tag pequena "3D" em mono ao lado do logo.
 - **Mood visual:** minimalista, industrial/artesanal, neutro-quente (fundos "paper/cream", nunca branco puro), acentos tipográficos em monoespaçada. Sensação de "estúdio de manufatura", não de SaaS genérico. **Sem gradientes** — só blocos de cor sólida + rings/opacidade (`/5`, `/10`, `/40`, `/60`, `/70`).
 
 ## 2. Paleta de cores

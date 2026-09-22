@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { calculateQuotePrice } from '@camada/shared';
+import { calculateQuotePrice } from '@crealio/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateQuoteDto } from './dto/create-quote.dto.js';
 

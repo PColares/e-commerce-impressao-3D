@@ -24,7 +24,7 @@
     "admin:promote": "tsx --env-file-if-exists=.env prisma/promote-admin.ts"
   },
   "dependencies": {
-    "@camada/shared": "workspace:*",
+    "@crealio/shared": "workspace:*",
     "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.0",

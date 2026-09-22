@@ -6,14 +6,14 @@ plano Cloud), implantado pelo hPanel.
 ## Por que existe um pacote de deploy
 
 O repositório é um monorepo pnpm e a Hostinger roda `npm install` na raiz do que for enviado. O
-`@camada/shared` está declarado como `workspace:*`, protocolo que o npm não entende — o install
+`@crealio/shared` está declarado como `workspace:*`, protocolo que o npm não entende — o install
 falharia. Além disso o produto implanta **um** app Node, e aqui há dois (Vue e NestJS).
 
 A solução está em `scripts/build-deploy.mjs`, que monta um app autocontido:
 
 - o NestJS passa a servir o build do Vue (`ServeStaticModule`, em `apps/api/src/app.module.ts`),
   então é um único processo, um domínio e sem CORS;
-- o `@camada/shared` vai como dependência `file:./vendor/shared`, já compilado;
+- o `@crealio/shared` vai como dependência `file:./dist/vendor/shared`, já compilado;
 - o `package.json` gerado tem só dependências de produção e `npm start`.
 
 ## Passo a passo
@@ -22,11 +22,11 @@ A solução está em `scripts/build-deploy.mjs`, que monta um app autocontido:
 # 1. gera deploy/ (roda os builds de shared, web e api)
 pnpm deploy:bundle
 
-# 2. empacota o CONTEÚDO de deploy/ (sem node_modules) em camada-deploy.zip
+# 2. empacota o CONTEÚDO de deploy/ (sem node_modules) em crealio-deploy.zip
 pnpm deploy:zip
 ```
 
-3. hPanel → seu web app Node.js → **Faça upload dos arquivos** → envie `camada-deploy.zip`.
+3. hPanel → seu web app Node.js → **Faça upload dos arquivos** → envie `crealio-deploy.zip`.
 4. Na tela "Revisar configurações de compilação":
    - **Configuração predefinida: NestJS.** O dropdown é alfabético e costuma abrir já rolado no
      final (React Router, Svelte, SvelteKit, Vite, Vue.js) — role para cima. Se não achar NestJS,
@@ -82,9 +82,9 @@ injeta `PORT` (o LiteSpeed intercepta o `listen`); o cwd é
 `node_modules`). Qualquer outra pasta da raiz do zip é descartada. Os logs do processo ficam em
 `console.log` e `stderr.log` nessa mesma pasta.
 
-**`@camada/shared` fora do `dist/`** (2026-09-22). O pacote ia em `vendor/shared` como dependência
+**`@crealio/shared` fora do `dist/`** (2026-09-22). O pacote ia em `vendor/shared` como dependência
 `file:`, que o npm instala como symlink. Como `vendor/` não chega à pasta de execução, o link
-ficava quebrado e o app morria com `ERR_MODULE_NOT_FOUND: @camada/shared`. Agora ele vai em
+ficava quebrado e o app morria com `ERR_MODULE_NOT_FOUND: @crealio/shared`. Agora ele vai em
 `dist/vendor/shared`.
 
 **Top-level await no entry** (2026-09-22). A Hostinger não roda `npm start`: ela carrega o
@@ -131,8 +131,9 @@ desenvolvimento espelhar a produção.
    o erro de `RSA public key` do MySQL 8 (que quase sempre é senha errada; se a senha estiver certa,
    acrescente `?ssl=true` à URL).
 
-> Qual host usar: para o **app** rodando na Hostinger, comece com `localhost` — é o caminho interno e
-> não exige abrir acesso remoto. Se ele não conectar, use o host do "MySQL remoto". Para rodar
+> Qual host usar: para o **app** rodando na Hostinger, use `127.0.0.1` (não `localhost`, que pode
+> resolver para IPv6 e o usuário do banco não ter permissão). É o caminho interno e não exige abrir
+> acesso remoto. Para rodar
 > migrations **da sua máquina**, é sempre o host do MySQL remoto.
 
 ```bash

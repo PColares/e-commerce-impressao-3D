@@ -38,7 +38,7 @@ describe.skipIf(!built)('boot com banco inacessível', () => {
 
   beforeAll(async () => {
     mkdirSync(SPA_DIR, { recursive: true });
-    writeFileSync(join(SPA_DIR, 'index.html'), '<!doctype html><title>Camada SPA</title>');
+    writeFileSync(join(SPA_DIR, 'index.html'), '<!doctype html><title>Crealio SPA</title>');
 
     server = spawn(process.execPath, [DIST_ENTRY], {
       cwd: API_ROOT,
@@ -69,7 +69,7 @@ describe.skipIf(!built)('boot com banco inacessível', () => {
     const response = await fetch(`${BASE}/`);
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('<title>Camada SPA</title>');
+    expect(await response.text()).toContain('<title>Crealio SPA</title>');
   });
 
   it('responde nas rotas que não dependem do banco', async () => {

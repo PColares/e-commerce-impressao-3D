@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { calculateQuotePrice, allowedModelExtensions, MAX_MODEL_FILE_SIZE_BYTES } from '@camada/shared'
+import { calculateQuotePrice, allowedModelExtensions, MAX_MODEL_FILE_SIZE_BYTES } from '@crealio/shared'
 import { useAuthStore } from '@/stores/auth'
 import { useMaterials, useLayerHeights, useColors } from '@/composables/useCatalog'
 import { api, ApiError } from '@/lib/api'

@@ -8,13 +8,9 @@ const currentYear = new Date().getFullYear()
       <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <div class="flex items-center gap-2.5">
-            <span
-              class="grid size-7 place-items-center rounded-[8px] bg-paper font-mono text-[11px] font-semibold text-ink"
-            >
-              C
-            </span>
+            <img src="/apple-touch-icon.png" alt="" class="size-7 shrink-0 rounded-[8px] ring-1 ring-paper/15" />
             <span class="font-sans text-[15px] font-semibold tracking-tight">
-              Camada<span class="text-copper">.</span>
+              Crealio<span class="text-copper">.</span>
             </span>
           </div>
           <p class="mt-4 max-w-[34ch] text-pretty font-sans text-sm text-paper/55">
@@ -59,12 +55,11 @@ const currentYear = new Date().getFullYear()
             <li>PIX · 10% de desconto</li>
             <li>Cartão em até 10x</li>
             <li>Boleto bancário</li>
-            <li>CNPJ com NF-e</li>
           </ul>
         </div>
       </div>
       <div class="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-paper/10 pt-6">
-        <span class="font-mono text-[11px] text-paper/40">© {{ currentYear }} Camada · São Paulo, BR</span>
+        <span class="font-mono text-[11px] text-paper/40">© {{ currentYear }} Crealio · Belém, PA</span>
         <div class="flex gap-5 font-mono text-[11px] text-paper/40">
           <span>Termos</span>
           <span>Privacidade</span>

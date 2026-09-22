@@ -3,7 +3,7 @@
 //
 // Por que não dá para subir o repositório direto: ele é um monorepo pnpm e a
 // Hostinger roda `npm install` na raiz do que for enviado — o protocolo
-// "workspace:*" do @camada/shared faria o install falhar. Aqui o pacote
+// "workspace:*" do @crealio/shared faria o install falhar. Aqui o pacote
 // compartilhado vai como dependência `file:`.
 
 import { execSync } from 'node:child_process'
@@ -22,7 +22,7 @@ const run = (cmd) => {
 const step = (msg) => console.log(`\n=== ${msg} ===`)
 
 step('build dos pacotes')
-run('pnpm --filter @camada/shared build')
+run('pnpm --filter @crealio/shared build')
 run('pnpm --filter web build-only')
 run('pnpm --filter api build')
 
@@ -58,7 +58,7 @@ cpSync(join(root, 'apps/api/prisma'), join(out, 'prisma'), { recursive: true })
 // Pacote compartilhado como dependência file:. Fica DENTRO de dist/ porque a
 // Hostinger só leva dist/, public/, package.json e node_modules para a pasta de
 // execução. O npm instala file: como symlink, então um vendor/ na raiz virava um
-// link quebrado: o app morria com ERR_MODULE_NOT_FOUND @camada/shared (503).
+// link quebrado: o app morria com ERR_MODULE_NOT_FOUND @crealio/shared (503).
 const sharedOut = join(out, 'dist/vendor/shared')
 mkdirSync(sharedOut, { recursive: true })
 cpSync(join(root, 'packages/shared/dist'), join(sharedOut, 'dist'), { recursive: true })
@@ -68,7 +68,7 @@ writeFileSync(
   join(sharedOut, 'package.json'),
   JSON.stringify(
     {
-      name: '@camada/shared',
+      name: '@crealio/shared',
       version: '0.0.0',
       type: 'module',
       main: './dist/index.js',
@@ -84,13 +84,13 @@ writeFileSync(
 
 step('gerando package.json de produção')
 const apiPkg = JSON.parse(readFileSync(join(root, 'apps/api/package.json'), 'utf8'))
-const deps = { ...apiPkg.dependencies, '@camada/shared': 'file:./dist/vendor/shared' }
+const deps = { ...apiPkg.dependencies, '@crealio/shared': 'file:./dist/vendor/shared' }
 
 writeFileSync(
   join(out, 'package.json'),
   JSON.stringify(
     {
-      name: 'camada',
+      name: 'crealio',
       version: '0.0.0',
       private: true,
       type: 'module',
@@ -128,7 +128,7 @@ writeFileSync(
 
 writeFileSync(
   join(out, 'LEIA-ME.md'),
-  `# Pacote de deploy — Camada
+  `# Pacote de deploy — Crealio
 
 Gerado por \`pnpm deploy:bundle\`. Não edite à mão: rode o script de novo.
 
@@ -137,7 +137,7 @@ Conteúdo:
 - \`dist/\` — API NestJS compilada (inclui o client do Prisma gerado)
 - \`public/\` — build do Vue, servido pelo próprio Nest
 - \`prisma/\` — schema e migrations
-- \`dist/vendor/shared/\` — pacote @camada/shared já compilado
+- \`dist/vendor/shared/\` — pacote @crealio/shared já compilado
 - \`package.json\` — só dependências de produção, com \`npm start\`
 
 ## Como subir no hPanel

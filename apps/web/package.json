@@ -21,7 +21,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "@camada/shared": "workspace:*",
+    "@crealio/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/vue-query": "^5.102.8",
     "@vueuse/core": "^14.4.0",

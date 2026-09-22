@@ -1,4 +1,4 @@
-# Pendências e Próximos Passos — Camada
+# Pendências e Próximos Passos — Crealio
 
 Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional. Ver também [architecture.md](./architecture.md), [design-system.md](./design-system.md) e [testing.md](./testing.md).
 
@@ -16,7 +16,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - **`packages/shared`:** enums/tipos de domínio + `calculateQuotePrice()` (fórmula de precificação, única fonte da verdade usada tanto no back quanto no front) + schema zod `quoteRequestSchema`, compilado via `tsc` para `dist/`.
 - **Frontend:** Vue 3 + TS + Vite + Tailwind v4 com os tokens do design system. A Home (`/`) é uma réplica fiel do protótipo Lovable (`camada-codigo-fonte`), remontada como página única com âncoras, e não mais uma tela genérica:
   - `AppHeader` — nav idêntica ao protótipo (Orçamento/Catálogo/Como funciona/Prova, todos rolando para as seções da home) + CTA "Enviar arquivo", com a parte de auth (Entrar/nome do usuário/Sair) à direita e menu hambúrguer no mobile. Os links usam `RouterLink` com hash (não `<a href>`), então navegar de `/catalogo` para uma seção da home não recarrega o SPA; o `scrollBehavior` do router faz a rolagem até a âncora.
-  - `HeroConfigurator` (`#orcamento`) — hero + card do configurador lado a lado, pixel-a-pixel com o protótipo (dropzone tracejada, chips de material em grid de 4, swatches de cor com ring, chips de camada, stepper de quantidade, painel de preço escuro com botão de seta), mas **funcional de verdade**: material/altura de camada/cor vêm da API, preço calculado com `@camada/shared`, submit cria o orçamento via `POST /api/quotes` (exige login).
+  - `HeroConfigurator` (`#orcamento`) — hero + card do configurador lado a lado, pixel-a-pixel com o protótipo (dropzone tracejada, chips de material em grid de 4, swatches de cor com ring, chips de camada, stepper de quantidade, painel de preço escuro com botão de seta), mas **funcional de verdade**: material/altura de camada/cor vêm da API, preço calculado com `@crealio/shared`, submit cria o orçamento via `POST /api/quotes` (exige login).
   - `ComoFunciona` (`#como`), `ProvaSocial` (`#prova`) — conteúdo estático igual ao protótipo.
   - `CatalogoTeaser` (`#catalogo`) — mostra os 3 primeiros produtos da API no mesmo estilo de card do protótipo, com botão **"Ver catálogo completo"** que leva para `/catalogo`.
   - `/catalogo` — página expandida: lista todos os produtos, com filtro por material (chips) e ordenação por preço. Reaproveita o componente `ProductCard`.
@@ -100,7 +100,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 ```bash
 pnpm install
 docker compose -f docker-compose.dev.yml up -d   # MySQL (porta 3307) + Redis
-pnpm --filter @camada/shared build                # se mexer em packages/shared
+pnpm --filter @crealio/shared build                # se mexer em packages/shared
 pnpm --filter api exec prisma generate            # se mexer no schema.prisma (ver seção acima para migrations)
 pnpm dev                                          # roda web + api em paralelo
 ```

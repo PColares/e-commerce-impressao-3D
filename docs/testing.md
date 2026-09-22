@@ -1,4 +1,4 @@
-# Testes — Camada
+# Testes — Crealio
 
 O desenvolvimento neste projeto é **test-first**: escreva o teste falhando antes da implementação.
 
@@ -21,7 +21,7 @@ já garante.
 pnpm test
 
 # unitários de um pacote só
-pnpm --filter @camada/shared test
+pnpm --filter @crealio/shared test
 pnpm --filter api test
 pnpm --filter web test
 pnpm --filter web test:watch

@@ -1,4 +1,4 @@
-# Arquitetura — Camada
+# Arquitetura — Crealio
 
 Decisões de stack para o e-commerce de impressão 3D sob demanda. Ver também [design-system.md](./design-system.md).
 

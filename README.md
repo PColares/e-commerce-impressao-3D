@@ -1,6 +1,6 @@
-# Camada — E-commerce de Impressão 3D sob Demanda
+# Crealio — E-commerce de Impressão 3D sob Demanda
 
-Monorepo do e-commerce de impressão 3D sob demanda "Camada".
+Monorepo do e-commerce de impressão 3D sob demanda "Crealio".
 
 ## Stack
 

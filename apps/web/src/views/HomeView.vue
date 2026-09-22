@@ -4,7 +4,6 @@ import AppFooter from '@/components/layout/AppFooter.vue'
 import HeroConfigurator from '@/components/HeroConfigurator.vue'
 import ComoFunciona from '@/components/sections/ComoFunciona.vue'
 import CatalogoTeaser from '@/components/sections/CatalogoTeaser.vue'
-import ProvaSocial from '@/components/sections/ProvaSocial.vue'
 </script>
 
 <template>
@@ -13,7 +12,7 @@ import ProvaSocial from '@/components/sections/ProvaSocial.vue'
     <HeroConfigurator />
     <ComoFunciona />
     <CatalogoTeaser />
-    <ProvaSocial />
+    <!-- ProvaSocial fica de fora até existirem avaliações reais: os números e depoimentos eram ilustrativos. -->
     <AppFooter />
   </div>
 </template>

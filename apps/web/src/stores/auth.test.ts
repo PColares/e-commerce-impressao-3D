@@ -52,13 +52,13 @@ describe('useAuthStore', () => {
 
     await auth.register({ email: 'a@b.com', password: 'senha1234', name: 'Ana' })
 
-    expect(localStorage.getItem('camada.token')).toBe('token-123')
-    expect(JSON.parse(localStorage.getItem('camada.user')!)).toMatchObject({ name: 'Ana' })
+    expect(localStorage.getItem('crealio.token')).toBe('token-123')
+    expect(JSON.parse(localStorage.getItem('crealio.user')!)).toMatchObject({ name: 'Ana' })
   })
 
   it('recupera a sessão do localStorage ao inicializar', async () => {
-    localStorage.setItem('camada.token', 'token-abc')
-    localStorage.setItem('camada.user', JSON.stringify(authResponse.user))
+    localStorage.setItem('crealio.token', 'token-abc')
+    localStorage.setItem('crealio.user', JSON.stringify(authResponse.user))
 
     const auth = await freshStore()
 
@@ -75,8 +75,8 @@ describe('useAuthStore', () => {
 
     expect(auth.token).toBeNull()
     expect(auth.user).toBeNull()
-    expect(localStorage.getItem('camada.token')).toBeNull()
-    expect(localStorage.getItem('camada.user')).toBeNull()
+    expect(localStorage.getItem('crealio.token')).toBeNull()
+    expect(localStorage.getItem('crealio.user')).toBeNull()
   })
 
   it('não guarda sessão se a API rejeitar o login', async () => {
@@ -86,7 +86,7 @@ describe('useAuthStore', () => {
     await expect(auth.login({ email: 'a@b.com', password: 'errada' })).rejects.toThrow()
 
     expect(auth.token).toBeNull()
-    expect(localStorage.getItem('camada.token')).toBeNull()
+    expect(localStorage.getItem('crealio.token')).toBeNull()
   })
 
   it('isAdmin só é verdadeiro para role ADMIN', async () => {

@@ -20,7 +20,7 @@ function bootWithout(variable: string): Promise<{ code: number | null; output: s
   // cwd tem que ser um diretório sem .env: o ConfigModule carrega o .env do
   // cwd, então rodar de apps/api mascararia a variável ausente. Em produção
   // não existe .env — as variáveis vêm do painel.
-  const isolatedCwd = mkdtempSync(join(tmpdir(), 'camada-env-'));
+  const isolatedCwd = mkdtempSync(join(tmpdir(), 'crealio-env-'));
 
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [DIST_ENTRY], { cwd: isolatedCwd, env });

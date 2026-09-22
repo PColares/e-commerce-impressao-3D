@@ -38,7 +38,7 @@ describe.skipIf(!built)('produção: um processo servindo API + SPA', () => {
 
   beforeAll(async () => {
     mkdirSync(SPA_DIR, { recursive: true });
-    writeFileSync(join(SPA_DIR, 'index.html'), '<!doctype html><title>Camada SPA</title>');
+    writeFileSync(join(SPA_DIR, 'index.html'), '<!doctype html><title>Crealio SPA</title>');
 
     server = spawn(process.execPath, [DIST_ENTRY], {
       cwd: API_ROOT,
@@ -58,7 +58,7 @@ describe.skipIf(!built)('produção: um processo servindo API + SPA', () => {
     const response = await fetch(`${BASE}/`);
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('<title>Camada SPA</title>');
+    expect(await response.text()).toContain('<title>Crealio SPA</title>');
   });
 
   it('faz fallback para o index.html nas rotas do Vue Router', async () => {
@@ -66,7 +66,7 @@ describe.skipIf(!built)('produção: um processo servindo API + SPA', () => {
     const response = await fetch(`${BASE}/catalogo`);
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('<title>Camada SPA</title>');
+    expect(await response.text()).toContain('<title>Crealio SPA</title>');
   });
 
   it('NÃO deixa o fallback do SPA engolir as rotas da API', async () => {
@@ -74,7 +74,7 @@ describe.skipIf(!built)('produção: um processo servindo API + SPA', () => {
     const body = await response.text();
 
     expect(response.status).toBe(200);
-    expect(body).not.toContain('Camada SPA');
+    expect(body).not.toContain('Crealio SPA');
     expect(body).toContain('Hello World');
   });
 
@@ -83,6 +83,6 @@ describe.skipIf(!built)('produção: um processo servindo API + SPA', () => {
 
     expect(response.status).toBe(404);
     expect(response.headers.get('content-type')).toContain('application/json');
-    expect(await response.text()).not.toContain('Camada SPA');
+    expect(await response.text()).not.toContain('Crealio SPA');
   });
 });

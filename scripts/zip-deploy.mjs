@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Compacta o CONTEÚDO de deploy/ em camada-deploy.zip.
+// Compacta o CONTEÚDO de deploy/ em crealio-deploy.zip.
 //
 // Três cuidados, todos aprendidos na prática:
 // - o zip precisa ter package.json na raiz; compactar a pasta em si faz a
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const deployDir = join(root, 'deploy')
-const zipName = 'camada-deploy.zip'
+const zipName = 'crealio-deploy.zip'
 const zipPath = join(root, zipName)
 
 if (!existsSync(deployDir)) {

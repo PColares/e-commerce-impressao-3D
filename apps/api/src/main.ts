@@ -11,7 +11,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('Camada API')
+    .setTitle('Crealio API')
     .setDescription('API do e-commerce de impressão 3D sob demanda')
     .setVersion('0.1')
     .build();
