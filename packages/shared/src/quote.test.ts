@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateQuotePrice,
   quoteRequestSchema,
+  MODEL_KEY_PATTERN,
   QUOTE_BASE_PRICE,
   MAX_INSTALLMENTS,
   MAX_MODEL_FILE_SIZE_BYTES,
@@ -81,7 +82,7 @@ describe('calculateQuotePrice', () => {
 describe('quoteRequestSchema', () => {
   const valid = {
     fileName: 'peca.stl',
-    fileUrl: 'https://storage.example.com/peca.stl',
+    fileKey: 'models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl',
     material: 'PLA' as const,
     layerHeight: 0.12 as const,
     colorId: 'ckcolor123',
@@ -111,8 +112,13 @@ describe('quoteRequestSchema', () => {
     expect(quoteRequestSchema.safeParse({ ...valid, quantity: 1000 }).success).toBe(false)
   })
 
-  it('rejeita fileUrl que não é URL', () => {
-    expect(quoteRequestSchema.safeParse({ ...valid, fileUrl: 'nao-e-url' }).success).toBe(false)
+  // A chave vem do upload (POST /uploads/model). Qualquer outra coisa (URL,
+  // caminho com "..", pasta diferente) é recusada antes de tocar no disco.
+  it('aceita só chave de modelo gerada pelo upload', () => {
+    expect(quoteRequestSchema.safeParse({ ...valid, fileKey: 'https://x.com/peca.stl' }).success).toBe(false)
+    expect(quoteRequestSchema.safeParse({ ...valid, fileKey: 'models/../../etc/passwd' }).success).toBe(false)
+    expect(quoteRequestSchema.safeParse({ ...valid, fileKey: 'products/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.png' }).success).toBe(false)
+    expect(MODEL_KEY_PATTERN.test('models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.3mf')).toBe(true)
   })
 
   it('rejeita nome de arquivo vazio', () => {

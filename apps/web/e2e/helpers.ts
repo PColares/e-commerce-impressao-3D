@@ -37,7 +37,26 @@ export async function openPanelAsAdmin(page: Page, request: APIRequestContext): 
   return (await response.json()).accessToken
 }
 
-// Um cliente faz um orçamento pelo caminho de verdade (POST /quotes).
+// STL binário válido: cabeçalho de 80 bytes + nº de triângulos + 50 bytes por triângulo.
+export function binaryStl(triangles: number): Buffer {
+  const buffer = Buffer.alloc(84 + triangles * 50)
+  buffer.write('crealio e2e', 0, 'ascii')
+  buffer.writeUInt32LE(triangles, 80)
+  for (let i = 84; i < buffer.length; i++) buffer[i] = i % 251
+  return buffer
+}
+
+// Envia um modelo pelo upload de verdade e devolve a chave para o orçamento.
+export async function uploadModel(request: APIRequestContext, token: string, fileName: string): Promise<string> {
+  const response = await request.post(`${API}/uploads/model`, {
+    headers: { Authorization: `Bearer ${token}` },
+    multipart: { file: { name: fileName, mimeType: 'model/stl', buffer: binaryStl(12) } },
+  })
+  expect(response.ok()).toBe(true)
+  return (await response.json()).key
+}
+
+// Um cliente faz um orçamento pelo caminho de verdade (upload + POST /quotes).
 export async function createQuoteAsCustomer(request: APIRequestContext, fileName: string) {
   const token = await registerUser(request, uniqueEmail('cliente'))
   // Itens fixos do seed, não "o primeiro da lista": outros testes criam cores e
@@ -50,7 +69,7 @@ export async function createQuoteAsCustomer(request: APIRequestContext, fileName
     headers: { Authorization: `Bearer ${token}` },
     data: {
       fileName,
-      fileUrl: 'https://exemplo.com/peca.stl',
+      fileKey: await uploadModel(request, token, fileName),
       materialId: material.id,
       layerHeightId: layer.id,
       colorId: color.id,

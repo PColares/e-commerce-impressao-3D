@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { Controller, Get, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
@@ -16,6 +17,16 @@ export class AdminQuotesController {
   @Get()
   list() {
     return this.quotes.list();
+  }
+
+  @Get(':id/file')
+  async file(@Param('id') id: string) {
+    const { path, fileName } = await this.quotes.file(id);
+    return new StreamableFile(createReadStream(path), {
+      type: 'application/octet-stream',
+      // filename* com UTF-8 para nomes com acento ("peça.stl").
+      disposition: `attachment; filename="${fileName.replace(/[^ -~]/g, '_').replace(/"/g, '')}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    });
   }
 
   @Post(':id/approve')

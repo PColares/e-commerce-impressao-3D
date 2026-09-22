@@ -102,7 +102,10 @@ test.describe('Produção', () => {
     await row.getByRole('button', { name: 'Recusar' }).click()
 
     await expect(row).toContainText('Recusado')
-    await expect(row.getByRole('button')).toHaveCount(0)
+    // Some tudo que decide o orçamento; baixar o arquivo continua disponível.
+    for (const action of ['Aprovar', 'Recusar', 'Mandar para produção']) {
+      await expect(row.getByRole('button', { name: action })).toHaveCount(0)
+    }
   })
 
   test('impressora em manutenção não aparece como opção para iniciar', async ({ page, request }) => {

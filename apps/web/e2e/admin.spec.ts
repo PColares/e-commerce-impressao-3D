@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { API, PASSWORD, adminEmail, login, openPanelAsAdmin, registerUser, uniqueEmail } from './helpers'
+import { API, PASSWORD, adminEmail, login, openPanelAsAdmin, registerUser, uniqueEmail, uploadModel } from './helpers'
 
 // Precisa da API local (não roda contra E2E_BASE_URL): o admin da execução é
 // promovido direto no banco pelo global-setup, como se faz de verdade.
@@ -221,7 +221,7 @@ test.describe('Painel do administrador', () => {
       headers: auth,
       data: {
         fileName: 'peca.stl',
-        fileUrl: 'https://exemplo.com/peca.stl',
+        fileKey: await uploadModel(request, token, 'peca.stl'),
         materialId: material.id,
         layerHeightId: layer.id,
         colorId: color.id,

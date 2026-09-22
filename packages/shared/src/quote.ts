@@ -10,13 +10,17 @@ export const allowedModelExtensions = ['.stl', '.3mf', '.obj', '.step'] as const
 
 export const MAX_MODEL_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 200MB
 
+// Chave devolvida por POST /uploads/model: pasta fixa, UUID gerado no servidor
+// e uma das extensões aceitas. Nunca um caminho vindo do cliente.
+export const MODEL_KEY_PATTERN = /^models\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(stl|3mf|obj|step)$/;
+
 export const QUOTE_BASE_PRICE = 58;
 export const PIX_DISCOUNT_RATE = 0.1;
 export const MAX_INSTALLMENTS = 10;
 
 export const quoteRequestSchema = z.object({
   fileName: z.string().min(1),
-  fileUrl: z.string().url(),
+  fileKey: z.string().regex(MODEL_KEY_PATTERN),
   material: z.enum(materialCodes),
   layerHeight: z.union([z.literal(0.2), z.literal(0.12), z.literal(0.08)]),
   colorId: z.string().min(1),

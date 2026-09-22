@@ -3,7 +3,13 @@ import { ref } from 'vue'
 import { ApiError } from '@/lib/api'
 import { brl, layerHeightLabel } from '@/lib/format'
 import { QUOTE_STATUS_LABEL, shortDate } from '@/lib/production'
-import { useAdminQuotes, useApproveQuote, useRejectQuote, type AdminQuote } from '@/composables/useProduction'
+import {
+  downloadQuoteFile,
+  useAdminQuotes,
+  useApproveQuote,
+  useRejectQuote,
+  type AdminQuote,
+} from '@/composables/useProduction'
 import JobFormDialog from './JobFormDialog.vue'
 
 const { data: quotes, isPending } = useAdminQuotes()
@@ -71,12 +77,18 @@ const statusClass: Record<AdminQuote['status'], string> = {
               <div class="font-mono text-[11px] text-steel/60">{{ quote.user.email }}</div>
             </td>
             <td class="px-4 py-3">
-              <div class="font-medium text-ink">{{ quote.fileName }}</div>
+              <div class="font-medium text-ink [overflow-wrap:anywhere]">{{ quote.fileName }}</div>
               <div class="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-steel">
                 <span class="size-2.5 rounded-full ring-1 ring-black/10" :style="{ background: quote.color.hex }" />
                 {{ quote.material.name }} · {{ quote.color.name }} · {{ layerHeightLabel(quote.layerHeight.millimeters) }}mm ·
                 {{ quote.quantity }} un.
               </div>
+              <button
+                class="mt-1 font-sans text-xs text-copper hover:text-copper-deep"
+                @click="run(() => downloadQuoteFile(quote.id, quote.fileName))"
+              >
+                Baixar arquivo
+              </button>
             </td>
             <td class="px-4 py-3 whitespace-nowrap">{{ brl(Number(quote.calculatedPrice)) }}</td>
             <td class="px-4 py-3">

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { QuotesService } from './quotes.service.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import type { PrivateDiskStorage } from '../storage/private-disk.storage.js';
 
 function buildPrismaMock() {
   return {
@@ -14,7 +15,7 @@ function buildPrismaMock() {
 
 const dto = {
   fileName: 'peca.stl',
-  fileUrl: 'https://storage.example.com/peca.stl',
+  fileKey: 'models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl',
   materialId: 'mat-pla',
   layerHeightId: 'lh-012',
   colorId: 'col-preto',
@@ -24,10 +25,12 @@ const dto = {
 describe('QuotesService', () => {
   let prisma: ReturnType<typeof buildPrismaMock>;
   let service: QuotesService;
+  let storage: { resolve: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     prisma = buildPrismaMock();
-    service = new QuotesService(prisma as unknown as PrismaService);
+    storage = { resolve: vi.fn().mockReturnValue('/disco/models/arquivo.stl') };
+    service = new QuotesService(prisma as unknown as PrismaService, storage as unknown as PrivateDiskStorage);
 
     prisma.material.findUnique.mockResolvedValue({ id: 'mat-pla', priceMultiplier: '1' });
     prisma.layerHeight.findUnique.mockResolvedValue({ id: 'lh-012', priceMultiplier: '1' });
@@ -36,6 +39,20 @@ describe('QuotesService', () => {
   });
 
   describe('create', () => {
+    it('guarda a chave do arquivo enviado', async () => {
+      await service.create('user-1', dto);
+
+      const { data } = prisma.quote.create.mock.calls[0]![0];
+      expect(data.fileKey).toBe(dto.fileKey);
+    });
+
+    it('recusa orçamento cujo arquivo não está no servidor', async () => {
+      storage.resolve.mockReturnValue(null);
+
+      await expect(service.create('user-1', dto)).rejects.toThrow(/envie o arquivo de novo/i);
+      expect(prisma.quote.create).not.toHaveBeenCalled();
+    });
+
     it('persiste o preço calculado no servidor, não um preço vindo do cliente', async () => {
       await service.create('user-1', dto);
 

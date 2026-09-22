@@ -23,6 +23,8 @@ const quantity = ref(1)
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const submittedId = ref<string | null>(null)
+// null = sem envio em andamento; 0–100 = porcentagem do upload do arquivo.
+const uploadProgress = ref<number | null>(null)
 
 // Pré-seleciona PLA, camada 0.12mm e a primeira cor assim que os dados chegam,
 // para o card já abrir com uma estimativa coerente (igual ao protótipo).
@@ -56,6 +58,10 @@ function onFileChange(event: Event) {
   file.value = selected
 }
 
+// Material, camada e cor vêm da API. Até chegarem o botão fica desabilitado:
+// antes, um clique rápido dizia "Selecione um arquivo" com o arquivo já escolhido.
+const optionsReady = computed(() => Boolean(materialId.value && layerHeightId.value && colorId.value))
+
 const selectedMaterial = computed(() => materials.value?.find((m) => m.id === materialId.value))
 const selectedLayerHeight = computed(() => layerHeights.value?.find((l) => l.id === layerHeightId.value))
 
@@ -77,20 +83,24 @@ async function onSubmit() {
     router.push('/login')
     return
   }
-  if (!file.value || !materialId.value || !layerHeightId.value || !colorId.value) {
+  if (!file.value) {
     fileError.value = fileError.value ?? 'Selecione um arquivo para continuar.'
     return
   }
+  if (!optionsReady.value) return
 
   submitting.value = true
   submitError.value = null
   try {
-    // TODO: enviar o arquivo para object storage real (Cloudflare R2/S3) e usar a URL retornada.
-    // Object URL local usado como placeholder enquanto o upload não está implementado (ver docs/pending.md).
-    const fileUrl = URL.createObjectURL(file.value)
+    // Primeiro o arquivo (a API confere se é mesmo um modelo 3D), depois o
+    // orçamento, que só guarda a chave do arquivo no servidor.
+    uploadProgress.value = 0
+    const { key } = await api.uploadWithProgress<{ key: string }>('/uploads/model', file.value, (percent) => {
+      uploadProgress.value = percent
+    })
     const quote = await api.post<{ id: string }>('/quotes', {
       fileName: file.value.name,
-      fileUrl,
+      fileKey: key,
       materialId: materialId.value,
       layerHeightId: layerHeightId.value,
       colorId: colorId.value,
@@ -101,6 +111,7 @@ async function onSubmit() {
     submitError.value = e instanceof ApiError ? e.message : 'Não foi possível gerar o orçamento.'
   } finally {
     submitting.value = false
+    uploadProgress.value = null
   }
 }
 </script>
@@ -170,7 +181,13 @@ async function onSubmit() {
                   {{ file ? file.name : 'Enviar .stl / .3mf' }}
                 </span>
                 <span class="mt-1 font-mono text-[11px] text-steel/70">até 200MB · análise em 24h</span>
-                <input type="file" :accept="allowedModelExtensions.join(',')" class="hidden" @change="onFileChange" />
+                <input
+                  type="file"
+                  aria-label="Arquivo do modelo 3D"
+                  :accept="allowedModelExtensions.join(',')"
+                  class="hidden"
+                  @change="onFileChange"
+                />
               </label>
               <p v-if="fileError" class="mt-2 font-mono text-[11px] text-red-600">{{ fileError }}</p>
             </div>
@@ -259,6 +276,23 @@ async function onSubmit() {
               </div>
             </div>
 
+            <div v-if="uploadProgress !== null" class="space-y-1.5">
+              <div class="flex justify-between font-mono text-[11px] text-steel">
+                <span>{{ uploadProgress < 100 ? 'Enviando arquivo…' : 'Conferindo o arquivo…' }}</span>
+                <span>{{ uploadProgress }}%</span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label="Envio do arquivo"
+                :aria-valuenow="uploadProgress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                class="h-1.5 overflow-hidden rounded-full bg-steel/15"
+              >
+                <div class="h-full rounded-full bg-copper transition-[width]" :style="{ width: `${uploadProgress}%` }" />
+              </div>
+            </div>
+
             <p v-if="submitError" class="font-mono text-[11px] text-red-600">{{ submitError }}</p>
 
             <div class="flex items-end justify-between rounded-[10px] bg-ink px-5 py-4 text-paper">
@@ -280,7 +314,7 @@ async function onSubmit() {
               <button
                 type="button"
                 aria-label="Solicitar orçamento"
-                :disabled="submitting"
+                :disabled="submitting || !optionsReady"
                 @click="onSubmit"
                 class="grid size-10 place-items-center rounded-[8px] bg-copper font-sans text-sm font-medium text-paper transition-colors hover:bg-copper-deep disabled:opacity-50"
               >

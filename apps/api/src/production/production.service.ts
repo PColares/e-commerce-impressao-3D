@@ -146,6 +146,7 @@ export class ProductionService {
         order: {
           select: {
             id: true,
+            quoteId: true,
             user: { select: { name: true } },
             quote: {
               select: {

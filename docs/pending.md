@@ -32,7 +32,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Limitação conhecida importante
 
-**Upload de arquivo é um placeholder.** `HeroConfigurator.vue` usa `URL.createObjectURL()` no lugar de subir o arquivo para um storage real — não existe endpoint de upload nem integração com object storage ainda. Isso significa que o `fileUrl` salvo no banco só é válido na sessão do navegador que criou o orçamento (não é uma URL real acessível depois). Precisa ser resolvido antes de ir para produção (ver item de Object Storage abaixo).
+**Arquivos ficam no disco do servidor.** Os modelos 3D (`private-uploads/`, fora da pasta servida) e as fotos de produto (`uploads/`) vivem na pasta do deploy. Na Hostinger cada deploy é uma pasta nova, então **tudo o que foi enviado some a cada novo upload do zip** — aceito neste projeto pessoal (2026-09-22). O painel responde "arquivo não disponível" nesse caso. Para guardar de verdade: implementar `FileStorage`/`PrivateDiskStorage` com object storage (Cloudflare R2), sem mexer no resto.
 
 ## Pendente — decisões que precisam de você
 
@@ -40,7 +40,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
    hPanel, tabelas e seed importados pelo phpMyAdmin com `kamada-banco.sql` (sem precisar de MySQL
    remoto), `DATABASE_URL` e `JWT_SECRET` configuradas no painel.
 2. **Credenciais do Mercado Pago** (access token de produção/teste) — só precisa quando formos implementar o checkout de verdade.
-3. **Object storage para os arquivos STL** (até 200MB cada): sugestão é Cloudflare R2 (free tier, sem custo de egress). Precisa criar a conta e gerar as chaves de API quando chegarmos nessa etapa — **bloqueia** o upload real (ver limitação acima).
+3. **Object storage** (opcional): hoje os arquivos ficam no disco e somem a cada deploy (ver limitação acima). Se isso incomodar, Cloudflare R2 (free tier, sem custo de egress) — criar a conta e as chaves.
 4. ~~**Token da API Hostinger**~~ — resolvido em 2026-09-21 com a extensão **Hostinger Connector**
    do VS Code ("Hostinger: Set API Token"), que registra os servidores MCP no `~/.claude.json`. O
    `.mcp.json` do projeto foi removido: ele definia servidores com os mesmos nomes, lendo uma
@@ -51,7 +51,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Pendente — backend (`apps/api`)
 
-- [ ] **Módulo de Upload:** endpoint que recebe o arquivo 3D (Multer), valida extensão/tamanho (a validação de extensão já existe no frontend, mas precisa existir no backend também) e envia para o object storage, retornando a URL real — hoje o front usa um placeholder local (ver limitação acima).
+- [x] **Upload do modelo 3D** (2026-09-22): `POST /api/uploads/model` (logado, até 200MB, gravado direto em disco), confere o conteúdo além da extensão (`storage/model-format.ts`: STL binário/texto, 3MF=zip, OBJ, STEP) e devolve uma chave privada; o orçamento guarda a chave (`fileKey`, coluna `fileUrl`). O admin baixa em `GET /api/admin/quotes/:id/file` ("Baixar arquivo" no orçamento e no card da produção). O cliente ainda não baixa o próprio arquivo — entra com a área do cliente.
 - [x] **Guard/decorator de role** (`@Roles('ADMIN')` + `RolesGuard`). Admin se promove com `pnpm --filter api admin:promote <email>` (na Hostinger: `UPDATE` no phpMyAdmin).
 - [x] **Catálogo — parte de escrita:** painel em `/admin` cria/edita/oculta/exclui produtos (com upload de foto), materiais, cores e alturas de camada. Excluir é recusado (409) para o que já está em orçamento/pedido. O filtro por material em `/catalogo` hoje é feito no cliente (poucos produtos) — se o catálogo crescer, mover para query params no backend (`GET /api/products?material=PETG`).
 - [~] **Módulo de Order:** já existe aprovar/recusar orçamento no painel (aprovar cria o `Order`). Falta: pedido a partir de itens do catálogo, transições de status do pedido (`AWAITING_PAYMENT` → `PAID` → … → `DELIVERED`) ligadas ao pagamento, e o pedido refletir a produção (hoje o status do pedido não muda quando o job anda).

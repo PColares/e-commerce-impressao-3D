@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AdminQuotesService } from './admin-quotes.service.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import type { PrivateDiskStorage } from '../storage/private-disk.storage.js';
 
 function buildPrismaMock() {
   const prisma = {
@@ -16,10 +17,12 @@ function buildPrismaMock() {
 describe('AdminQuotesService', () => {
   let prisma: ReturnType<typeof buildPrismaMock>;
   let service: AdminQuotesService;
+  let storage: { resolve: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     prisma = buildPrismaMock();
-    service = new AdminQuotesService(prisma as unknown as PrismaService);
+    storage = { resolve: vi.fn() };
+    service = new AdminQuotesService(prisma as unknown as PrismaService, storage as unknown as PrivateDiskStorage);
   });
 
   it('aprovar cria o pedido do cliente com o preço calculado do orçamento', async () => {
@@ -53,5 +56,39 @@ describe('AdminQuotesService', () => {
     prisma.quote.findUnique.mockResolvedValue(null);
 
     await expect(service.approve('x')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  describe('baixar o arquivo', () => {
+    it('devolve o caminho e o nome original do modelo', async () => {
+      prisma.quote.findUnique.mockResolvedValue({
+        id: 'q1',
+        fileName: 'suporte.stl',
+        fileKey: 'models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl',
+      });
+      storage.resolve.mockReturnValue('/privado/models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl');
+
+      await expect(service.file('q1')).resolves.toEqual({
+        path: '/privado/models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl',
+        fileName: 'suporte.stl',
+      });
+    });
+
+    it('orçamento antigo, com URL provisória, dá 404 sem nem olhar o disco', async () => {
+      prisma.quote.findUnique.mockResolvedValue({ id: 'q1', fileName: 'x.stl', fileKey: 'blob:http://localhost/abc' });
+
+      await expect(service.file('q1')).rejects.toThrow(/não está disponível/);
+      expect(storage.resolve).not.toHaveBeenCalled();
+    });
+
+    it('arquivo que sumiu do disco (ex.: redeploy na Hostinger) dá 404', async () => {
+      prisma.quote.findUnique.mockResolvedValue({
+        id: 'q1',
+        fileName: 'x.stl',
+        fileKey: 'models/3f2b8c1e-9d4a-4f6e-8b7a-1c2d3e4f5a6b.stl',
+      });
+      storage.resolve.mockReturnValue(null);
+
+      await expect(service.file('q1')).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });

@@ -25,3 +25,4 @@ node_modules
 /test/__spa-fixture__/
 /test/__spa-boot-fixture__/
 uploads/
+private-uploads/

@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { calculateQuotePrice } from '@crealio/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { PrivateDiskStorage } from '../storage/private-disk.storage.js';
 import type { CreateQuoteDto } from './dto/create-quote.dto.js';
 
 @Injectable()
 export class QuotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: PrivateDiskStorage,
+  ) {}
 
   async create(userId: string, dto: CreateQuoteDto) {
+    // A chave só é aceita se o upload aconteceu de fato neste servidor.
+    if (!this.storage.resolve(dto.fileKey)) {
+      throw new BadRequestException('Não encontramos o arquivo enviado. Envie o arquivo de novo.');
+    }
+
     const [material, layerHeight, color] = await Promise.all([
       this.prisma.material.findUnique({ where: { id: dto.materialId } }),
       this.prisma.layerHeight.findUnique({ where: { id: dto.layerHeightId } }),
@@ -28,7 +37,7 @@ export class QuotesService {
       data: {
         userId,
         fileName: dto.fileName,
-        fileUrl: dto.fileUrl,
+        fileKey: dto.fileKey,
         materialId: dto.materialId,
         layerHeightId: dto.layerHeightId,
         colorId: dto.colorId,

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { ApiError } from '@/lib/api'
 import { FAILURE_LABEL, duration, shortDate, type JobStatus } from '@/lib/production'
-import { useFinishPrint, useMoveJob, type PrintJob } from '@/composables/useProduction'
+import { downloadQuoteFile, useFinishPrint, useMoveJob, type PrintJob } from '@/composables/useProduction'
 
 const props = defineProps<{ job: PrintJob }>()
 const emit = defineEmits<{ start: []; fail: []; edit: [] }>()
@@ -54,6 +54,13 @@ const danger = `${action} text-red-700 ring-1 ring-red-700/30 hover:bg-red-50`
       <span class="size-2.5 shrink-0 rounded-full ring-1 ring-black/10" :style="{ background: job.order.quote.color.hex }" />
       {{ job.order.quote.material.name }} {{ job.order.quote.color.name }} · {{ job.order.quote.quantity }} un.
     </div>
+    <button
+      v-if="job.order.quoteId && job.order.quote"
+      class="mt-1 font-sans text-xs text-copper hover:text-copper-deep"
+      @click="run(() => downloadQuoteFile(job.order.quoteId!, job.order.quote!.fileName))"
+    >
+      Baixar arquivo
+    </button>
 
     <div class="mt-2 flex flex-wrap gap-1.5 font-mono text-[10px] uppercase tracking-[0.1em]">
       <span v-if="job.late" class="rounded-full bg-red-600 px-2 py-0.5 text-paper">Atrasado</span>

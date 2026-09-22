@@ -18,7 +18,7 @@ interface QuoteSummary {
 
 export interface AdminQuote extends QuoteSummary {
   id: string
-  fileUrl: string
+  fileKey: string
   calculatedPrice: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
@@ -73,7 +73,7 @@ export interface PrintJob {
   notes: string | null
   startedAt: string | null
   printer: { id: string; name: string } | null
-  order: { id: string; user: { name: string }; quote: QuoteSummary | null }
+  order: { id: string; quoteId: string | null; user: { name: string }; quote: QuoteSummary | null }
   failures: PrintFailure[]
 }
 
@@ -111,6 +111,10 @@ function useProductionMutation<TVars>(fn: (vars: TVars) => Promise<unknown>) {
   const refresh = useRefreshProduction()
   return useMutation({ mutationFn: fn, onSuccess: refresh })
 }
+
+// O modelo 3D do orçamento, com o nome original (para abrir direto no fatiador).
+export const downloadQuoteFile = (quoteId: string, fileName: string) =>
+  api.download(`/admin/quotes/${quoteId}/file`, fileName)
 
 export const useAdminQuotes = () =>
   useQuery({ queryKey: ['admin', 'quotes'], queryFn: () => api.get<AdminQuote[]>('/admin/quotes') })

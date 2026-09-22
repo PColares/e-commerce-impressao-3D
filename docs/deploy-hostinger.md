@@ -166,3 +166,11 @@ Esse mesmo comando foi usado para validar o pacote antes de subir — com o bund
   Upstash, ou de uma abordagem sem fila.
 - **Sem Docker**, ou seja, o `docker-compose.dev.yml` continua sendo só para desenvolvimento local.
 - O upload é manual: sem CI/CD até o import por Git voltar.
+- **Arquivos enviados somem a cada deploy.** Fotos de produto (`uploads/`) e modelos 3D dos
+  clientes (`private-uploads/`, nunca servidos diretamente) ficam na pasta de execução
+  `hbuilds/versions/<uuid>/nodejs`, que é nova a cada deploy. As pastas são criadas no primeiro
+  upload, não na inicialização — uma pasta sem permissão de escrita dá erro no upload, não 503.
+- **Limite de upload do LiteSpeed não verificado.** O app aceita modelos de até 200MB; se o
+  servidor web da Hostinger tiver um teto menor para o corpo da requisição, o envio falha antes de
+  chegar ao Nest (o site mostra "Arquivo maior que o permitido"). Testar com um arquivo grande
+  depois do próximo deploy.

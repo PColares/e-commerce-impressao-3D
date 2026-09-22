@@ -85,7 +85,9 @@ model Quote {
   id              String      @id @default(cuid())
   user            User        @relation(fields: [userId], references: [id])
   userId          String
-  fileUrl         String      @db.Text
+  // Chave do arquivo no armazenamento privado ("models/<uuid>.stl"). A coluna
+  // continua "fileUrl" no banco: orçamentos antigos guardavam uma URL ali.
+  fileKey         String      @map("fileUrl") @db.Text
   fileName        String
   material        Material    @relation(fields: [materialId], references: [id])
   materialId      String
