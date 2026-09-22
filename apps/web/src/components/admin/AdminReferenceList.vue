@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { ApiError } from '@/lib/api'
-import { useAdminReference, useSaveReference, type Field, type ReferenceKind } from '@/composables/useAdmin'
+import {
+  useAdminReference,
+  useDeleteItem,
+  useSaveReference,
+  type Field,
+  type ReferenceKind,
+} from '@/composables/useAdmin'
 import Button from '@/components/ui/Button.vue'
 import ColorField from './ColorField.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 import { normalizeHex } from '@/lib/color'
 
 const props = defineProps<{ kind: ReferenceKind; fields: Field[]; noun: string }>()
@@ -12,6 +19,26 @@ type Row = Record<string, string> & { id: string; active: boolean }
 
 const { data: rows, isPending } = useAdminReference<Row>(props.kind)
 const save = useSaveReference(props.kind)
+const remove = useDeleteItem(props.kind)
+const toDelete = ref<Row | null>(null)
+const confirmOpen = ref(false)
+
+function askDelete(row: Row) {
+  toDelete.value = row
+  confirmOpen.value = true
+}
+
+function confirmDelete() {
+  const row = toDelete.value
+  if (row) run(() => remove.mutateAsync(row.id))
+}
+
+// Nome legível do item para a confirmação: o primeiro campo, já formatado.
+function label(row: Row) {
+  const field = props.fields[0]!
+  const value = row[field.key]!
+  return field.display ? field.display(value) : value
+}
 
 const editingId = ref<string | null>(null)
 const draft = reactive<Record<string, string>>({})
@@ -79,6 +106,16 @@ const fieldClass =
       Itens ocultos somem do configurador de orçamento, mas continuam nos orçamentos antigos.
     </p>
 
+    <ConfirmDialog
+      v-model:open="confirmOpen"
+      :title="`Excluir ${noun}?`"
+      confirm-label="Excluir"
+      @confirm="confirmDelete"
+    >
+      <strong class="text-ink">{{ toDelete ? label(toDelete) : '' }}</strong> será apagado de vez. Se já
+      foi usado em algum orçamento, não pode ser excluído, só ocultado.
+    </ConfirmDialog>
+
     <p v-if="error" class="mt-3 font-mono text-[11px] text-red-600">{{ error }}</p>
     <p v-if="isPending" class="mt-6 font-mono text-[11px] text-steel/70">Carregando…</p>
 
@@ -134,6 +171,7 @@ const fieldClass =
                 <button class="ml-4 text-steel hover:text-ink" @click="toggleActive(row)">
                   {{ row.active ? 'Ocultar' : 'Mostrar' }}
                 </button>
+                <button class="ml-4 text-red-700 hover:text-red-800" @click="askDelete(row)">Excluir</button>
               </td>
             </template>
           </tr>

@@ -25,8 +25,18 @@ async function translate<T>(operation: Promise<T>, conflictMessage: string): Pro
   }
 }
 
-// Sem delete: pedidos e orçamentos antigos referenciam esses registros, então
-// "remover" é marcar active=false — some da vitrine e do configurador.
+// Excluir só é permitido para o que nunca foi usado: pedidos e orçamentos
+// antigos referenciam esses registros e perderiam o histórico. Para tirar de
+// circulação algo já usado, o caminho é active=false (some da vitrine e do
+// configurador).
+function refuseIfUsed(count: number, singular: string, plural: string, what: string) {
+  if (count === 0) return;
+  const noun = count === 1 ? singular : plural;
+  throw new ConflictException(
+    `Não dá para excluir: ${what} aparece em ${count} ${noun}. Oculte em vez de excluir.`,
+  );
+}
+
 @Injectable()
 export class AdminCatalogService {
   constructor(private readonly prisma: PrismaService) {}
@@ -78,5 +88,30 @@ export class AdminCatalogService {
 
   updateLayerHeight(id: string, dto: UpdateLayerHeightDto) {
     return translate(this.prisma.layerHeight.update({ where: { id }, data: dto }), 'Essa altura de camada já existe.');
+  }
+
+  async deleteProduct(id: string) {
+    refuseIfUsed(await this.prisma.orderItem.count({ where: { productId: id } }), 'pedido', 'pedidos', 'este produto');
+    return translate(this.prisma.product.delete({ where: { id } }), '');
+  }
+
+  async deleteMaterial(id: string) {
+    refuseIfUsed(await this.prisma.quote.count({ where: { materialId: id } }), 'orçamento', 'orçamentos', 'este material');
+    return translate(this.prisma.material.delete({ where: { id } }), '');
+  }
+
+  async deleteColor(id: string) {
+    refuseIfUsed(await this.prisma.quote.count({ where: { colorId: id } }), 'orçamento', 'orçamentos', 'esta cor');
+    return translate(this.prisma.color.delete({ where: { id } }), '');
+  }
+
+  async deleteLayerHeight(id: string) {
+    refuseIfUsed(
+      await this.prisma.quote.count({ where: { layerHeightId: id } }),
+      'orçamento',
+      'orçamentos',
+      'esta altura de camada',
+    );
+    return translate(this.prisma.layerHeight.delete({ where: { id } }), '');
   }
 }

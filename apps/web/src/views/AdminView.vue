@@ -50,14 +50,19 @@ const layerFields: Field[] = [
       <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-copper">Administração</span>
       <h1 class="mt-2 font-sans text-2xl font-semibold leading-none tracking-tight sm:text-3xl">Painel</h1>
 
-      <div role="tablist" class="mt-8 flex gap-1 overflow-x-auto border-b border-line">
+      <!-- A linha de baixo é uma sombra interna, não border: com border e o -mb-px
+           das abas, o sublinhado vazava 1px e o overflow-x-auto virava rolagem vertical. -->
+      <div
+        role="tablist"
+        class="mt-8 flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none]"
+      >
         <button
           v-for="tab in tabs"
           :key="tab.id"
           role="tab"
           :aria-selected="active === tab.id"
           :class="[
-            '-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 font-sans text-sm transition-colors',
+            'whitespace-nowrap border-b-2 px-4 py-2.5 font-sans text-sm transition-colors',
             active === tab.id ? 'border-copper text-ink' : 'border-transparent text-steel hover:text-ink',
           ]"
           @click="active = tab.id"

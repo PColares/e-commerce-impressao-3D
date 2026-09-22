@@ -1,23 +1,24 @@
 import { test, expect, type Page } from '@playwright/test'
-import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { ADMIN_FILE, E2E_PASSWORD as PASSWORD } from './global-setup'
 
-// Precisa da API local (não roda contra E2E_BASE_URL): o admin é promovido
-// direto no banco pelo script admin:promote, como se faz de verdade.
+// Precisa da API local (não roda contra E2E_BASE_URL): o admin da execução é
+// promovido direto no banco pelo global-setup, como se faz de verdade.
 test.skip(!!process.env.E2E_BASE_URL, 'promove admin pelo banco local')
 
 const API = 'http://localhost:3333/api'
-const PASSWORD = 'senha12345'
 
-async function registerUser(request: import('@playwright/test').APIRequestContext, email: string) {
+type Request = import('@playwright/test').APIRequestContext
+
+const adminEmail = (): string => JSON.parse(readFileSync(ADMIN_FILE, 'utf8')).email
+
+const uniqueEmail = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
+
+async function registerUser(request: Request, email: string) {
   const response = await request.post(`${API}/auth/register`, {
-    data: { email, password: PASSWORD, name: 'Admin E2E' },
+    data: { email, password: PASSWORD, name: 'Cliente E2E' },
   })
   expect(response.ok()).toBe(true)
-}
-
-// O e-mail é gerado pelo próprio teste, então montar a linha de comando é seguro.
-function promote(email: string) {
-  execSync(`pnpm --filter api admin:promote ${email}`, { cwd: '../..', stdio: 'pipe' })
 }
 
 async function login(page: Page, email: string) {
@@ -27,9 +28,20 @@ async function login(page: Page, email: string) {
   await page.getByRole('button', { name: 'Entrar' }).click()
 }
 
+// Admin logado e já no painel. Devolve o token para montar dados pela API.
+async function openPanelAsAdmin(page: Page, request: Request): Promise<string> {
+  const email = adminEmail()
+  const response = await request.post(`${API}/auth/login`, { data: { email, password: PASSWORD } })
+  expect(response.ok()).toBe(true)
+  await login(page, email)
+  await page.waitForURL((url) => url.pathname === '/')
+  await page.goto('/admin')
+  return (await response.json()).accessToken
+}
+
 test.describe('Painel do administrador', () => {
   test('cliente comum não entra no painel', async ({ page, request }) => {
-    const email = `cliente-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
+    const email = uniqueEmail('cliente')
     await registerUser(request, email)
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
@@ -41,9 +53,7 @@ test.describe('Painel do administrador', () => {
   })
 
   test('visitante é levado ao login e volta para o painel depois de entrar', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
 
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/login\?redirect=/)
@@ -57,9 +67,7 @@ test.describe('Painel do administrador', () => {
   })
 
   test('admin cadastra um produto inativo e ele aparece na lista, mas não na vitrine', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
 
@@ -107,12 +115,15 @@ test.describe('Painel do administrador', () => {
 
     const shop = await request.get(`${API}/products`)
     expect(JSON.stringify(await shop.json())).not.toContain(name)
+
+    // Não deixa lixo de teste no painel.
+    await row.getByRole('button', { name: 'Excluir' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Excluir', exact: true }).click()
+    await expect(row).toHaveCount(0)
   })
 
   test('admin vê materiais, cores e alturas de camada', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
     await page.goto('/admin')
@@ -128,15 +139,13 @@ test.describe('Painel do administrador', () => {
   })
 
   test('admin cadastra cor digitando o hex', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
     await page.goto('/admin')
     await page.getByRole('tab', { name: 'Cores' }).click()
 
-    const name = `Areia ${Date.now()}`
+    const name = `Areia E2E ${Date.now()}`
     await page.getByLabel('Nome').fill(name)
     const hex = page.getByLabel('Hex da cor')
     await hex.fill('#f5f5f0')
@@ -152,15 +161,14 @@ test.describe('Painel do administrador', () => {
     const row = page.getByRole('row').filter({ hasText: name })
     await expect(row).toContainText('#F5F5F0')
 
-    // Oculta para não aparecer no configurador que os outros testes conferem.
-    await row.getByRole('button', { name: 'Ocultar' }).click()
-    await expect(row).toContainText('Oculto')
+    // Exclui para não sobrar no configurador nem no painel.
+    await row.getByRole('button', { name: 'Excluir' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Excluir', exact: true }).click()
+    await expect(row).toHaveCount(0)
   })
 
   test('o modal de produto fecha com Esc sem salvar', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
     await page.goto('/admin')
@@ -177,9 +185,7 @@ test.describe('Painel do administrador', () => {
   })
 
   test('nenhuma aba do painel alarga a página além da tela', async ({ page, request }) => {
-    const email = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-    await registerUser(request, email)
-    promote(email)
+    const email = adminEmail()
     await login(page, email)
     await page.waitForURL((url) => url.pathname === '/')
     await page.goto('/admin')
@@ -195,5 +201,71 @@ test.describe('Painel do administrador', () => {
       )
       expect(overflow, `aba ${tab}`).toBeLessThanOrEqual(0)
     }
+  })
+
+  test('a barra de abas não mostra rolagem', async ({ page, request }) => {
+    await openPanelAsAdmin(page, request)
+
+    const tablist = page.getByRole('tablist')
+    await expect(tablist).toBeVisible()
+    const extra = await tablist.evaluate((el) => el.scrollHeight - el.clientHeight)
+    expect(extra).toBeLessThanOrEqual(0)
+  })
+
+  test('admin exclui um produto sem pedidos, depois de confirmar', async ({ page, request }) => {
+    const token = await openPanelAsAdmin(page, request)
+    const name = `Excluível ${Date.now()}`
+    const created = await request.post(`${API}/admin/products`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { name, description: 'para excluir', basePrice: 10, active: false },
+    })
+    expect(created.ok()).toBe(true)
+    await page.reload()
+
+    const row = page.getByRole('row').filter({ hasText: name })
+    await row.getByRole('button', { name: 'Excluir' }).click()
+
+    // Cancelar não apaga nada.
+    const confirm = page.getByRole('alertdialog', { name: 'Excluir produto?' })
+    await expect(confirm).toContainText(name)
+    await confirm.getByRole('button', { name: 'Cancelar' }).click()
+    await expect(row).toBeVisible()
+
+    await row.getByRole('button', { name: 'Excluir' }).click()
+    await confirm.getByRole('button', { name: 'Excluir', exact: true }).click()
+    await expect(row).toHaveCount(0)
+  })
+
+  test('excluir material usado em orçamento é recusado com explicação', async ({ page, request }) => {
+    const token = await openPanelAsAdmin(page, request)
+    const auth = { Authorization: `Bearer ${token}` }
+    const name = `MatE2E${Date.now()}`
+
+    // Material oculto (não aparece no configurador dos outros testes) usado num orçamento.
+    const material = await (
+      await request.post(`${API}/admin/materials`, { headers: auth, data: { name, priceMultiplier: 1, active: false } })
+    ).json()
+    const [layer] = await (await request.get(`${API}/layer-heights`)).json()
+    const [color] = await (await request.get(`${API}/colors`)).json()
+    const quote = await request.post(`${API}/quotes`, {
+      headers: auth,
+      data: {
+        fileName: 'peca.stl',
+        fileUrl: 'https://exemplo.com/peca.stl',
+        materialId: material.id,
+        layerHeightId: layer.id,
+        colorId: color.id,
+        quantity: 1,
+      },
+    })
+    expect(quote.ok()).toBe(true)
+
+    await page.getByRole('tab', { name: 'Materiais' }).click()
+    const row = page.getByRole('row').filter({ hasText: name })
+    await row.getByRole('button', { name: 'Excluir' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Excluir', exact: true }).click()
+
+    await expect(page.getByText('aparece em 1 orçamento. Oculte em vez de excluir.')).toBeVisible()
+    await expect(row).toBeVisible()
   })
 })

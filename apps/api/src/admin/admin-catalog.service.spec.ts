@@ -4,7 +4,7 @@ import { AdminCatalogService } from './admin-catalog.service.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 
 function delegate() {
-  return { findMany: vi.fn(), create: vi.fn(), update: vi.fn() };
+  return { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
 }
 
 function buildPrismaMock() {
@@ -13,6 +13,8 @@ function buildPrismaMock() {
     material: delegate(),
     color: delegate(),
     layerHeight: delegate(),
+    quote: { count: vi.fn().mockResolvedValue(0) },
+    orderItem: { count: vi.fn().mockResolvedValue(0) },
   };
 }
 
@@ -27,7 +29,7 @@ describe('AdminCatalogService', () => {
   beforeEach(() => {
     prisma = buildPrismaMock();
     service = new AdminCatalogService(prisma as unknown as PrismaService);
-    for (const model of Object.values(prisma)) {
+    for (const model of [prisma.product, prisma.material, prisma.color, prisma.layerHeight]) {
       model.create.mockImplementation(({ data }: { data: object }) => ({ id: 'novo', ...data }));
       model.update.mockImplementation(({ data }: { data: object }) => ({ id: 'x', ...data }));
     }
@@ -109,6 +111,49 @@ describe('AdminCatalogService', () => {
       await service.listMaterials();
 
       expect(prisma.material.findMany).toHaveBeenCalledWith({ orderBy: { priceMultiplier: 'asc' } });
+    });
+  });
+
+  describe('excluir', () => {
+    it('exclui produto que nunca foi pedido', async () => {
+      await service.deleteProduct('p1');
+
+      expect(prisma.orderItem.count).toHaveBeenCalledWith({ where: { productId: 'p1' } });
+      expect(prisma.product.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
+    });
+
+    it('recusa excluir produto que está em pedidos, com 409 explicando o que fazer', async () => {
+      prisma.orderItem.count.mockResolvedValue(2);
+
+      const attempt = service.deleteProduct('p1');
+
+      await expect(attempt).rejects.toBeInstanceOf(ConflictException);
+      await expect(attempt).rejects.toThrow(/2 pedidos.*ocult/i);
+      expect(prisma.product.delete).not.toHaveBeenCalled();
+    });
+
+    it('recusa excluir material usado em orçamentos', async () => {
+      prisma.quote.count.mockResolvedValue(1);
+
+      await expect(service.deleteMaterial('m1')).rejects.toThrow(/aparece em 1 orçamento\./);
+      expect(prisma.quote.count).toHaveBeenCalledWith({ where: { materialId: 'm1' } });
+      expect(prisma.material.delete).not.toHaveBeenCalled();
+    });
+
+    it('exclui cor e altura de camada sem uso', async () => {
+      await service.deleteColor('c1');
+      await service.deleteLayerHeight('l1');
+
+      expect(prisma.quote.count).toHaveBeenCalledWith({ where: { colorId: 'c1' } });
+      expect(prisma.quote.count).toHaveBeenCalledWith({ where: { layerHeightId: 'l1' } });
+      expect(prisma.color.delete).toHaveBeenCalledWith({ where: { id: 'c1' } });
+      expect(prisma.layerHeight.delete).toHaveBeenCalledWith({ where: { id: 'l1' } });
+    });
+
+    it('excluir id inexistente vira 404', async () => {
+      prisma.color.delete.mockRejectedValue(recordNotFound);
+
+      await expect(service.deleteColor('x')).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

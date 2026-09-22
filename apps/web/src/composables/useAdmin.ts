@@ -63,6 +63,16 @@ export function useSaveProduct() {
   })
 }
 
+// Excluir só funciona para o que nunca foi usado; a API responde 409 com a
+// explicação quando há orçamentos/pedidos ligados.
+export function useDeleteItem(kind: ReferenceKind | 'products') {
+  const invalidate = useInvalidate(kind)
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/${kind}/${id}`),
+    onSuccess: invalidate,
+  })
+}
+
 export function useUploadProductImage() {
   return useMutation({
     mutationFn: (file: File) => api.upload<{ url: string }>('/admin/uploads/product-image', file),

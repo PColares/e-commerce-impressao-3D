@@ -2,12 +2,34 @@
 import { ref } from 'vue'
 import { ImageOff } from 'lucide-vue-next'
 import { brl } from '@/lib/format'
-import { useAdminProducts, useSaveProduct, type AdminProduct } from '@/composables/useAdmin'
+import { ApiError } from '@/lib/api'
+import { useAdminProducts, useDeleteItem, useSaveProduct, type AdminProduct } from '@/composables/useAdmin'
 import Button from '@/components/ui/Button.vue'
 import ProductFormDialog from './ProductFormDialog.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 
 const { data: products, isPending } = useAdminProducts()
 const save = useSaveProduct()
+const remove = useDeleteItem('products')
+
+const toDelete = ref<AdminProduct | null>(null)
+const confirmOpen = ref(false)
+const error = ref<string | null>(null)
+
+function askDelete(product: AdminProduct) {
+  toDelete.value = product
+  confirmOpen.value = true
+}
+
+async function confirmDelete() {
+  if (!toDelete.value) return
+  error.value = null
+  try {
+    await remove.mutateAsync(toDelete.value.id)
+  } catch (e) {
+    error.value = e instanceof ApiError ? String(e.message) : 'Não foi possível excluir.'
+  }
+}
 
 const dialogOpen = ref(false)
 const editing = ref<AdminProduct | null>(null)
@@ -37,6 +59,12 @@ function toggleActive(product: AdminProduct) {
     </div>
 
     <ProductFormDialog v-model:open="dialogOpen" :product="editing" />
+    <ConfirmDialog v-model:open="confirmOpen" title="Excluir produto?" confirm-label="Excluir" @confirm="confirmDelete">
+      <strong class="text-ink">{{ toDelete?.name }}</strong> será apagado de vez. Produtos que já estão em
+      pedidos não podem ser excluídos, só ocultados.
+    </ConfirmDialog>
+
+    <p v-if="error" class="mt-4 font-mono text-[11px] text-red-600">{{ error }}</p>
 
     <p v-if="isPending" class="mt-6 font-mono text-[11px] text-steel/70">Carregando…</p>
 
@@ -82,6 +110,7 @@ function toggleActive(product: AdminProduct) {
               <button class="ml-4 text-steel hover:text-ink" @click="toggleActive(product)">
                 {{ product.active ? 'Ocultar' : 'Mostrar' }}
               </button>
+              <button class="ml-4 text-red-700 hover:text-red-800" @click="askDelete(product)">Excluir</button>
             </td>
           </tr>
         </tbody>

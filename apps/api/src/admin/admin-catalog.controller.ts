@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
@@ -38,6 +38,12 @@ export class AdminCatalogController {
     return this.catalog.updateProduct(id, dto);
   }
 
+  @Delete('products/:id')
+  @HttpCode(204)
+  async deleteProduct(@Param('id') id: string) {
+    await this.catalog.deleteProduct(id);
+  }
+
   @Get('materials')
   listMaterials() {
     return this.catalog.listMaterials();
@@ -51,6 +57,12 @@ export class AdminCatalogController {
   @Patch('materials/:id')
   updateMaterial(@Param('id') id: string, @Body() dto: UpdateMaterialDto) {
     return this.catalog.updateMaterial(id, dto);
+  }
+
+  @Delete('materials/:id')
+  @HttpCode(204)
+  async deleteMaterial(@Param('id') id: string) {
+    await this.catalog.deleteMaterial(id);
   }
 
   @Get('colors')
@@ -68,6 +80,12 @@ export class AdminCatalogController {
     return this.catalog.updateColor(id, dto);
   }
 
+  @Delete('colors/:id')
+  @HttpCode(204)
+  async deleteColor(@Param('id') id: string) {
+    await this.catalog.deleteColor(id);
+  }
+
   @Get('layer-heights')
   listLayerHeights() {
     return this.catalog.listLayerHeights();
@@ -81,5 +99,11 @@ export class AdminCatalogController {
   @Patch('layer-heights/:id')
   updateLayerHeight(@Param('id') id: string, @Body() dto: UpdateLayerHeightDto) {
     return this.catalog.updateLayerHeight(id, dto);
+  }
+
+  @Delete('layer-heights/:id')
+  @HttpCode(204)
+  async deleteLayerHeight(@Param('id') id: string) {
+    await this.catalog.deleteLayerHeight(id);
   }
 }

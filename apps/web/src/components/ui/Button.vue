@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'dark'
+    variant?: 'primary' | 'secondary' | 'dark' | 'danger'
     type?: 'button' | 'submit'
     disabled?: boolean
   }>(),
@@ -14,6 +14,7 @@ const variants = {
   primary: 'bg-copper text-paper ring-1 ring-copper-deep/40 hover:bg-copper-deep',
   secondary: 'bg-transparent text-ink ring-1 ring-ink/15 hover:bg-ink/5',
   dark: 'bg-ink text-paper hover:bg-steel',
+  danger: 'bg-red-700 text-paper ring-1 ring-red-900/30 hover:bg-red-800',
 }
 </script>
 

@@ -10,6 +10,9 @@ const externalBaseUrl = process.env.E2E_BASE_URL
 
 export default defineConfig({
   testDir: './e2e',
+  // Admin único da execução e faxina do banco local ao final (ambos ignorados com E2E_BASE_URL).
+  globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
