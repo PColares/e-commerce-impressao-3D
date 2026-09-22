@@ -36,9 +36,9 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 
 ## Pendente — decisões que precisam de você
 
-1. **Criar o MySQL de produção no hPanel** (Bancos de dados → MySQL), habilitar o **MySQL remoto**
-   para o seu IP e guardar a `DATABASE_URL` nas variáveis de ambiente do painel. **Bloqueia o
-   deploy.** Ver [deploy-hostinger.md](./deploy-hostinger.md).
+1. ~~**MySQL de produção**~~ — resolvido em 2026-09-22: banco `u520460695_kamadadb` criado no
+   hPanel, tabelas e seed importados pelo phpMyAdmin com `kamada-banco.sql` (sem precisar de MySQL
+   remoto), `DATABASE_URL` e `JWT_SECRET` configuradas no painel.
 2. **Credenciais do Mercado Pago** (access token de produção/teste) — só precisa quando formos implementar o checkout de verdade.
 3. **Object storage para os arquivos STL** (até 200MB cada): sugestão é Cloudflare R2 (free tier, sem custo de egress). Precisa criar a conta e gerar as chaves de API quando chegarmos nessa etapa — **bloqueia** o upload real (ver limitação acima).
 4. ~~**Token da API Hostinger**~~ — resolvido em 2026-09-21 com a extensão **Hostinger Connector**
@@ -73,8 +73,9 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [x] **Pacote de deploy** (`pnpm deploy:bundle` + `pnpm deploy:zip`) gerando um app Node
       autocontido, validado localmente com `npm install --omit=dev` + `npm start` e com os 21 testes
       E2E funcionais rodando contra ele. Ver [deploy-hostinger.md](./deploy-hostinger.md).
-- [ ] **Primeiro deploy de verdade:** subir o zip, configurar `DATABASE_URL`/`JWT_SECRET` no hPanel
-      e rodar `prisma migrate deploy` + seed contra o banco de produção.
+- [x] **Primeiro deploy de verdade** (2026-09-22): no ar em
+      `https://violet-tapir-602845.hostingersite.com`, com catálogo vindo do MySQL. As duas causas do
+      503 estão em [deploy-hostinger.md](./deploy-hostinger.md).
 - [ ] **CI/CD:** hoje o upload é manual porque o import por Git está desativado no painel da
       Hostinger. Quando voltar, automatizar o redeploy por push.
 - [ ] Configurar domínio/DNS no painel da Hostinger apontando para o app.
