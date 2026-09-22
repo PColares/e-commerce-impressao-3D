@@ -75,6 +75,24 @@ processo morre durante a inicialização e o proxy devolve 503 sem nenhuma pista
 proposital (não se sobe autenticação com segredo improvisado) e está fixado por teste em
 `apps/api/test/required-env.e2e-spec.ts`.
 
+**Como a Hostinger executa o app** (medido em 2026-09-22 com um app de diagnóstico): Node
+22.18, processo `lsnode.js` do LiteSpeed, que faz `require()` do entry (`dist/main.js`); não
+injeta `PORT` (o LiteSpeed intercepta o `listen`); o cwd é
+`hbuilds/versions/<uuid>/nodejs` e ali só existem **`dist/`, `public/`, `package.json`** (e
+`node_modules`). Qualquer outra pasta da raiz do zip é descartada. Os logs do processo ficam em
+`console.log` e `stderr.log` nessa mesma pasta.
+
+**`@camada/shared` fora do `dist/`** (2026-09-22). O pacote ia em `vendor/shared` como dependência
+`file:`, que o npm instala como symlink. Como `vendor/` não chega à pasta de execução, o link
+ficava quebrado e o app morria com `ERR_MODULE_NOT_FOUND: @camada/shared`. Agora ele vai em
+`dist/vendor/shared`.
+
+**Top-level await no entry** (2026-09-22). A Hostinger não roda `npm start`: ela carrega o
+"entry file" (`main` do `package.json`, `dist/main.js`) com `require()`. O build é ESM, e o Node
+só aceita `require()` de ESM sem `await` no topo — com `await bootstrap()` o processo morria com
+`ERR_REQUIRE_ASYNC_MODULE` antes de abrir a porta. Localmente com `npm start` tudo funcionava, o
+que escondia o problema. Fixado por `apps/api/test/require-entry.e2e-spec.ts`.
+
 O que **não** derruba o boot: `DATABASE_URL` ausente ou banco fora do ar. O Prisma 7 com driver
 adapter conecta de forma lazy, então o app sobe, serve o frontend, e só as rotas de dados falham
 com 500 (coberto por `apps/api/test/boot-resilience.e2e-spec.ts`). Útil porque um banco gerenciado

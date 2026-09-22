@@ -55,8 +55,11 @@ cpSync(join(root, 'apps/web/dist'), join(out, 'public'), { recursive: true })
 // Schema e migrations, para rodar `prisma migrate deploy` contra o banco externo
 cpSync(join(root, 'apps/api/prisma'), join(out, 'prisma'), { recursive: true })
 
-// Pacote compartilhado como dependência file:
-const sharedOut = join(out, 'vendor/shared')
+// Pacote compartilhado como dependência file:. Fica DENTRO de dist/ porque a
+// Hostinger só leva dist/, public/, package.json e node_modules para a pasta de
+// execução. O npm instala file: como symlink, então um vendor/ na raiz virava um
+// link quebrado: o app morria com ERR_MODULE_NOT_FOUND @camada/shared (503).
+const sharedOut = join(out, 'dist/vendor/shared')
 mkdirSync(sharedOut, { recursive: true })
 cpSync(join(root, 'packages/shared/dist'), join(sharedOut, 'dist'), { recursive: true })
 
@@ -81,7 +84,7 @@ writeFileSync(
 
 step('gerando package.json de produção')
 const apiPkg = JSON.parse(readFileSync(join(root, 'apps/api/package.json'), 'utf8'))
-const deps = { ...apiPkg.dependencies, '@camada/shared': 'file:./vendor/shared' }
+const deps = { ...apiPkg.dependencies, '@camada/shared': 'file:./dist/vendor/shared' }
 
 writeFileSync(
   join(out, 'package.json'),
@@ -91,6 +94,8 @@ writeFileSync(
       version: '0.0.0',
       private: true,
       type: 'module',
+      // A Hostinger não usa `npm start`: carrega este entry com require().
+      main: 'dist/main.js',
       // Permissivo de propósito: não sabemos qual Node exato a Hostinger usa,
       // e um engines restritivo faz o npm install falhar no servidor.
       engines: { node: '>=20' },
@@ -132,7 +137,7 @@ Conteúdo:
 - \`dist/\` — API NestJS compilada (inclui o client do Prisma gerado)
 - \`public/\` — build do Vue, servido pelo próprio Nest
 - \`prisma/\` — schema e migrations
-- \`vendor/shared/\` — pacote @camada/shared já compilado
+- \`dist/vendor/shared/\` — pacote @camada/shared já compilado
 - \`package.json\` — só dependências de produção, com \`npm start\`
 
 ## Como subir no hPanel
