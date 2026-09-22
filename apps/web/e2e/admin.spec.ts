@@ -1,43 +1,9 @@
-import { test, expect, type Page } from '@playwright/test'
-import { readFileSync } from 'node:fs'
-import { ADMIN_FILE, E2E_PASSWORD as PASSWORD } from './global-setup'
+import { test, expect } from '@playwright/test'
+import { API, PASSWORD, adminEmail, login, openPanelAsAdmin, registerUser, uniqueEmail } from './helpers'
 
 // Precisa da API local (não roda contra E2E_BASE_URL): o admin da execução é
 // promovido direto no banco pelo global-setup, como se faz de verdade.
 test.skip(!!process.env.E2E_BASE_URL, 'promove admin pelo banco local')
-
-const API = 'http://localhost:3333/api'
-
-type Request = import('@playwright/test').APIRequestContext
-
-const adminEmail = (): string => JSON.parse(readFileSync(ADMIN_FILE, 'utf8')).email
-
-const uniqueEmail = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@e2e.com`
-
-async function registerUser(request: Request, email: string) {
-  const response = await request.post(`${API}/auth/register`, {
-    data: { email, password: PASSWORD, name: 'Cliente E2E' },
-  })
-  expect(response.ok()).toBe(true)
-}
-
-async function login(page: Page, email: string) {
-  await page.goto('/login')
-  await page.getByLabel('E-mail').fill(email)
-  await page.getByLabel('Senha').fill(PASSWORD)
-  await page.getByRole('button', { name: 'Entrar' }).click()
-}
-
-// Admin logado e já no painel. Devolve o token para montar dados pela API.
-async function openPanelAsAdmin(page: Page, request: Request): Promise<string> {
-  const email = adminEmail()
-  const response = await request.post(`${API}/auth/login`, { data: { email, password: PASSWORD } })
-  expect(response.ok()).toBe(true)
-  await login(page, email)
-  await page.waitForURL((url) => url.pathname === '/')
-  await page.goto('/admin')
-  return (await response.json()).accessToken
-}
 
 test.describe('Painel do administrador', () => {
   test('cliente comum não entra no painel', async ({ page, request }) => {
@@ -193,9 +159,10 @@ test.describe('Painel do administrador', () => {
     // As tabelas rolam na horizontal dentro do próprio quadro. Se algo escapa
     // (já aconteceu com um sr-only absoluto), o celular afasta o zoom e o modal
     // abre fora da tela.
-    for (const tab of ['Produtos', 'Materiais', 'Cores', 'Camadas']) {
+    for (const tab of ['Produtos', 'Materiais', 'Cores', 'Camadas', 'Orçamentos', 'Produção', 'Impressoras']) {
       await page.getByRole('tab', { name: tab }).click()
-      await expect(page.getByRole('table')).toBeVisible()
+      await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByText('Carregando…')).toHaveCount(0)
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )
@@ -246,7 +213,10 @@ test.describe('Painel do administrador', () => {
       await request.post(`${API}/admin/materials`, { headers: auth, data: { name, priceMultiplier: 1, active: false } })
     ).json()
     const [layer] = await (await request.get(`${API}/layer-heights`)).json()
-    const [color] = await (await request.get(`${API}/colors`)).json()
+    // Cor fixa do seed: "a primeira da lista" pode ser uma cor que outro teste
+    // está criando e vai tentar excluir em paralelo.
+    const colors: { name: string; id: string }[] = await (await request.get(`${API}/colors`)).json()
+    const color = colors.find((c) => c.name === 'Preto')!
     const quote = await request.post(`${API}/quotes`, {
       headers: auth,
       data: {

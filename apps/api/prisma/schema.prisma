@@ -29,12 +29,13 @@ model User {
 }
 
 model Material {
-  id              String   @id @default(cuid())
-  name            String   @unique // PLA, PETG, ABS, Resina
-  priceMultiplier Decimal  @db.Decimal(4, 2)
-  active          Boolean  @default(true)
+  id              String  @id @default(cuid())
+  name            String  @unique // PLA, PETG, ABS, Resina
+  priceMultiplier Decimal @db.Decimal(4, 2)
+  active          Boolean @default(true)
 
-  quotes Quote[]
+  quotes       Quote[]
+  printerSlots PrinterSlot[]
 }
 
 model LayerHeight {
@@ -47,12 +48,13 @@ model LayerHeight {
 }
 
 model Color {
-  id       String  @id @default(cuid())
-  name     String  @unique
-  hex      String
-  active   Boolean @default(true)
+  id     String  @id @default(cuid())
+  name   String  @unique
+  hex    String
+  active Boolean @default(true)
 
-  quotes Quote[]
+  quotes       Quote[]
+  printerSlots PrinterSlot[]
 }
 
 model Product {
@@ -80,21 +82,21 @@ enum QuoteStatus {
 }
 
 model Quote {
-  id            String      @id @default(cuid())
-  user          User        @relation(fields: [userId], references: [id])
-  userId        String
-  fileUrl       String      @db.Text
-  fileName      String
-  material      Material    @relation(fields: [materialId], references: [id])
-  materialId    String
-  layerHeight   LayerHeight @relation(fields: [layerHeightId], references: [id])
-  layerHeightId String
-  color         Color       @relation(fields: [colorId], references: [id])
-  colorId       String
-  quantity      Int
-  calculatedPrice Decimal   @db.Decimal(10, 2)
-  status        QuoteStatus @default(PENDING)
-  createdAt     DateTime    @default(now())
+  id              String      @id @default(cuid())
+  user            User        @relation(fields: [userId], references: [id])
+  userId          String
+  fileUrl         String      @db.Text
+  fileName        String
+  material        Material    @relation(fields: [materialId], references: [id])
+  materialId      String
+  layerHeight     LayerHeight @relation(fields: [layerHeightId], references: [id])
+  layerHeightId   String
+  color           Color       @relation(fields: [colorId], references: [id])
+  colorId         String
+  quantity        Int
+  calculatedPrice Decimal     @db.Decimal(10, 2)
+  status          QuoteStatus @default(PENDING)
+  createdAt       DateTime    @default(now())
 
   order Order?
 }
@@ -109,18 +111,19 @@ enum OrderStatus {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  user        User        @relation(fields: [userId], references: [id])
-  userId      String
-  quote       Quote?      @relation(fields: [quoteId], references: [id])
-  quoteId     String?     @unique
-  items       OrderItem[]
-  status      OrderStatus @default(AWAITING_PAYMENT)
-  totalPrice  Decimal     @db.Decimal(10, 2)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  user       User        @relation(fields: [userId], references: [id])
+  userId     String
+  quote      Quote?      @relation(fields: [quoteId], references: [id])
+  quoteId    String?     @unique
+  items      OrderItem[]
+  status     OrderStatus @default(AWAITING_PAYMENT)
+  totalPrice Decimal     @db.Decimal(10, 2)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
-  payment Payment?
+  payment   Payment?
+  printJobs PrintJob[]
 }
 
 model OrderItem {
@@ -147,13 +150,118 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id                    String        @id @default(cuid())
-  order                 Order         @relation(fields: [orderId], references: [id])
-  orderId               String        @unique
-  method                PaymentMethod
-  status                PaymentStatus @default(PENDING)
-  mercadoPagoPaymentId  String?       @unique
-  amount                Decimal       @db.Decimal(10, 2)
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  id                   String        @id @default(cuid())
+  order                Order         @relation(fields: [orderId], references: [id])
+  orderId              String        @unique
+  method               PaymentMethod
+  status               PaymentStatus @default(PENDING)
+  mercadoPagoPaymentId String?       @unique
+  amount               Decimal       @db.Decimal(10, 2)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+// ─── Produção ────────────────────────────────────────────────────────────────
+// Só o admin vê. O pedido (Order) é o lado comercial; o PrintJob é a produção:
+// um pedido pode virar várias impressões (peças/placas). Ver docs/architecture.md.
+
+// Só os estados que o admin define na mão. "Imprimindo" e "Disponível" são
+// derivados dos jobs, para nunca ficarem desatualizados.
+enum PrinterManualStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
+model Printer {
+  id                              String              @id @default(cuid())
+  name                            String              @unique // apelido, ex: "K2 #1"
+  model                           String // ex: "Creality K2 Plus"
+  buildVolume                     String? // ex: "350 × 350 × 350 mm"
+  nozzleDiameter                  Decimal             @default(0.4) @db.Decimal(3, 2)
+  manualStatus                    PrinterManualStatus @default(ACTIVE)
+  printedMinutes                  Int                 @default(0)
+  maintenanceIntervalHours        Int?
+  printedMinutesAtLastMaintenance Int                 @default(0)
+  lastMaintenanceAt               DateTime?
+  notes                           String?             @db.Text
+  createdAt                       DateTime            @default(now())
+
+  slots    PrinterSlot[]
+  jobs     PrintJob[]
+  failures PrintFailure[]
+}
+
+// Filamento carregado em cada posição (na K2, os slots do CFS).
+model PrinterSlot {
+  id         String    @id @default(cuid())
+  printer    Printer   @relation(fields: [printerId], references: [id], onDelete: Cascade)
+  printerId  String
+  position   Int
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  materialId String?
+  color      Color?    @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  colorId    String?
+
+  @@unique([printerId, position])
+}
+
+enum PrintJobStatus {
+  QUEUED // na fila
+  PREPARING // fatiando / preparando a mesa
+  PRINTING
+  FINISHING // acabamento: suporte, lixa, pintura
+  INSPECTION // conferência
+  READY // pronto para envio
+}
+
+enum PrintJobPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model PrintJob {
+  id               String           @id @default(cuid())
+  order            Order            @relation(fields: [orderId], references: [id])
+  orderId          String
+  title            String
+  status           PrintJobStatus   @default(QUEUED)
+  priority         PrintJobPriority @default(NORMAL)
+  printer          Printer?         @relation(fields: [printerId], references: [id], onDelete: SetNull)
+  printerId        String?
+  estimatedMinutes Int? // do fatiador
+  estimatedGrams   Int? // do fatiador
+  dueDate          DateTime? // prazo prometido ao cliente
+  notes            String?          @db.Text
+  startedAt        DateTime? // início da impressão atual
+  printedAt        DateTime? // fim da impressão (saiu da mesa)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  failures PrintFailure[]
+}
+
+enum PrintFailureReason {
+  WARPING
+  SPAGHETTI
+  NOZZLE_CLOG
+  BED_ADHESION
+  LAYER_SHIFT
+  FILAMENT_RUNOUT
+  POWER_OUTAGE
+  OTHER
+}
+
+// Cada impressão que falhou. O job volta para a fila e a impressora é liberada.
+model PrintFailure {
+  id          String             @id @default(cuid())
+  job         PrintJob           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       String
+  printer     Printer?           @relation(fields: [printerId], references: [id], onDelete: SetNull)
+  printerId   String?
+  reason      PrintFailureReason
+  notes       String?            @db.Text
+  wastedGrams Int?
+  createdAt   DateTime           @default(now())
 }

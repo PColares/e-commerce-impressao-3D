@@ -24,6 +24,10 @@ const prisma = new PrismaClient({ adapter: new PrismaMariaDb(url) });
 
 try {
   const testUsers = { user: { email: { endsWith: '@e2e.com' } } };
+  // Ordem importa por causa das FKs: jobs (as falhas vão junto) → pedidos → orçamentos → usuários.
+  await prisma.printJob.deleteMany({ where: { order: testUsers } });
+  await prisma.order.deleteMany({ where: testUsers });
+  await prisma.printer.deleteMany({ where: { name: { startsWith: 'E2E ' } } });
   const quotes = await prisma.quote.deleteMany({ where: testUsers });
   const users = await prisma.user.deleteMany({ where: { email: { endsWith: '@e2e.com' } } });
   const products = await prisma.product.deleteMany({

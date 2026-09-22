@@ -52,9 +52,12 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 ## Pendente — backend (`apps/api`)
 
 - [ ] **Módulo de Upload:** endpoint que recebe o arquivo 3D (Multer), valida extensão/tamanho (a validação de extensão já existe no frontend, mas precisa existir no backend também) e envia para o object storage, retornando a URL real — hoje o front usa um placeholder local (ver limitação acima).
-- [ ] **Guard/decorator de role** (`CUSTOMER`/`ADMIN`) para rotas de admin (cadastro de produtos, materiais, cores).
-- [ ] **Módulo de Catálogo — parte de escrita:** hoje `Product`/`Material`/`Color`/`LayerHeight` só têm leitura pública; falta CRUD de admin para cadastrar peças no catálogo. O filtro por material em `/catalogo` hoje é feito no cliente (poucos produtos) — se o catálogo crescer, mover para query params no backend (`GET /api/products?material=PETG`).
-- [ ] **Módulo de Order:** criação de pedido a partir de um `Quote` aprovado ou de itens do catálogo, transições de status (`AWAITING_PAYMENT` → `PAID` → `IN_PRODUCTION` → `SHIPPED` → `DELIVERED`).
+- [x] **Guard/decorator de role** (`@Roles('ADMIN')` + `RolesGuard`). Admin se promove com `pnpm --filter api admin:promote <email>` (na Hostinger: `UPDATE` no phpMyAdmin).
+- [x] **Catálogo — parte de escrita:** painel em `/admin` cria/edita/oculta/exclui produtos (com upload de foto), materiais, cores e alturas de camada. Excluir é recusado (409) para o que já está em orçamento/pedido. O filtro por material em `/catalogo` hoje é feito no cliente (poucos produtos) — se o catálogo crescer, mover para query params no backend (`GET /api/products?material=PETG`).
+- [~] **Módulo de Order:** já existe aprovar/recusar orçamento no painel (aprovar cria o `Order`). Falta: pedido a partir de itens do catálogo, transições de status do pedido (`AWAITING_PAYMENT` → `PAID` → … → `DELIVERED`) ligadas ao pagamento, e o pedido refletir a produção (hoje o status do pedido não muda quando o job anda).
+- [x] **Produção — fase 1** (2026-09-22): impressoras (status derivado dos jobs + manutenção/offline manual, filamentos carregados por posição, horas impressas, lembrete de manutenção), quadro de jobs (Fila → Preparando → Imprimindo → Acabamento → Conferência → Pronto), prazo com "Atrasado" no fuso de Belém, prioridade e registro de falhas (o job volta para a fila). Regras em `apps/api/src/production/production-rules.ts`.
+- [ ] **Produção — fase 2:** estoque de filamento (bobinas, gramas descontadas ao terminar um job, alerta de estoque baixo) e custo por job (filamento + energia + falhas) para comparar com o preço cobrado.
+- [ ] **Integração com a K2** (a pesquisar com a impressora em mãos): ler status/tempo restante pela rede para preencher o quadro sozinho.
 - [ ] **Integração Mercado Pago:** instalar SDK oficial (`mercadopago`), criar preferência de pagamento no checkout, webhook para atualizar `Payment`/`Order` quando o pagamento for aprovado.
 - [ ] **BullMQ:** configurar `BullModule` de fato (só a dependência está instalada, nenhuma fila/processor criado ainda) — ex: e-mail de confirmação, notificar admin de novo orçamento.
 - [ ] **Testes do CatalogService:** `AuthService` e `QuotesService` já têm testes unitários; falta cobrir o `CatalogService` (ordenação dos materiais por preço, filtro de `active`).
@@ -65,7 +68,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [ ] **Checkout:** tela de finalização de compra integrando a preferência de pagamento do Mercado Pago (depende do backend implementar isso primeiro).
 - [ ] **Área do cliente:** lista de orçamentos/pedidos do usuário logado com acompanhamento de status (o backend já expõe `GET /api/quotes`, falta a tela).
 - [ ] **Componentes shadcn-vue restantes:** só `Button` e `Input` foram escritos; os demais listados em `design-system.md` seção 6 (Dialog, Select, Tabs, Toast via `vue-sonner` etc.) ainda não existem — o layout usa HTML/Tailwind cru em vários pontos (ex: chips de material/cor no configurador, select de ordenação no catálogo).
-- [ ] Favicon customizado (hoje é o placeholder do `create-vue`).
+- [x] Favicon da Crealio (gerado no favicon.io).
 - [ ] **Testes de componente:** o front tem Vitest configurado e testes de `lib/format` e da store `auth`, mas nenhum teste de componente com `@vue/test-utils` (a dependência já está instalada) — hoje o comportamento de UI é coberto pelo E2E.
 
 ## Pendente — infraestrutura / deploy

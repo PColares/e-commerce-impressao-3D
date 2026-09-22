@@ -1,21 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import AdminProducts from '@/components/admin/AdminProducts.vue'
 import AdminReferenceList from '@/components/admin/AdminReferenceList.vue'
+import AdminQuotes from '@/components/admin/AdminQuotes.vue'
+import ProductionBoard from '@/components/admin/ProductionBoard.vue'
+import AdminPrinters from '@/components/admin/AdminPrinters.vue'
 import type { Field } from '@/composables/useAdmin'
 import { layerHeightLabel } from '@/lib/format'
 
-type Tab = 'products' | 'materials' | 'colors' | 'layer-heights'
+// O id vira o ?aba= da URL: recarregar ou salvar o link mantém a aba.
+const tabs = [
+  { id: 'produtos', label: 'Produtos' },
+  { id: 'materiais', label: 'Materiais' },
+  { id: 'cores', label: 'Cores' },
+  { id: 'camadas', label: 'Camadas' },
+  { id: 'orcamentos', label: 'Orçamentos', divider: true },
+  { id: 'producao', label: 'Produção' },
+  { id: 'impressoras', label: 'Impressoras' },
+] as const
+type Tab = (typeof tabs)[number]['id']
 
-const tabs: { id: Tab; label: string }[] = [
-  { id: 'products', label: 'Produtos' },
-  { id: 'materials', label: 'Materiais' },
-  { id: 'colors', label: 'Cores' },
-  { id: 'layer-heights', label: 'Camadas' },
-]
-const active = ref<Tab>('products')
+const route = useRoute()
+const router = useRouter()
+const active = computed<Tab>({
+  get: () => tabs.find((tab) => tab.id === route.query.aba)?.id ?? 'produtos',
+  set: (id) => router.replace({ query: { ...route.query, aba: id } }),
+})
 
 const multiplier: Field = {
   key: 'priceMultiplier',
@@ -56,9 +69,9 @@ const layerFields: Field[] = [
         role="tablist"
         class="mt-8 flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none]"
       >
+        <template v-for="tab in tabs" :key="tab.id">
+        <span v-if="'divider' in tab" aria-hidden="true" class="mx-2 my-2.5 w-px shrink-0 bg-line" />
         <button
-          v-for="tab in tabs"
-          :key="tab.id"
           role="tab"
           :aria-selected="active === tab.id"
           :class="[
@@ -69,13 +82,17 @@ const layerFields: Field[] = [
         >
           {{ tab.label }}
         </button>
+        </template>
       </div>
 
       <div class="mt-6">
-        <AdminProducts v-if="active === 'products'" />
-        <AdminReferenceList v-else-if="active === 'materials'" kind="materials" :fields="materialFields" noun="material" />
-        <AdminReferenceList v-else-if="active === 'colors'" kind="colors" :fields="colorFields" noun="cor" />
-        <AdminReferenceList v-else kind="layer-heights" :fields="layerFields" noun="camada" />
+        <AdminProducts v-if="active === 'produtos'" />
+        <AdminReferenceList v-else-if="active === 'materiais'" kind="materials" :fields="materialFields" noun="material" />
+        <AdminReferenceList v-else-if="active === 'cores'" kind="colors" :fields="colorFields" noun="cor" />
+        <AdminReferenceList v-else-if="active === 'camadas'" kind="layer-heights" :fields="layerFields" noun="camada" />
+        <AdminQuotes v-else-if="active === 'orcamentos'" />
+        <ProductionBoard v-else-if="active === 'producao'" />
+        <AdminPrinters v-else />
       </div>
     </main>
 
