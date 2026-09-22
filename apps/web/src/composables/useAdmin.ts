@@ -63,6 +63,12 @@ export function useSaveProduct() {
   })
 }
 
+export function useUploadProductImage() {
+  return useMutation({
+    mutationFn: (file: File) => api.upload<{ url: string }>('/admin/uploads/product-image', file),
+  })
+}
+
 export function useAdminReference<T>(kind: ReferenceKind) {
   return useQuery({ queryKey: ['admin', kind], queryFn: () => api.get<T[]>(`/admin/${kind}`) })
 }

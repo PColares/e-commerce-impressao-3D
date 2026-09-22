@@ -14,6 +14,13 @@ export default defineConfig({
     ...(process.env.PLAYWRIGHT ? [] : [vueDevTools()]),
     tailwindcss(),
   ],
+  // Em produção a API serve o SPA e os uploads no mesmo host; no dev as fotos
+  // enviadas pelo admin (/uploads/...) moram na API, então o Vite repassa.
+  server: {
+    proxy: {
+      '/uploads': 'http://localhost:3333',
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

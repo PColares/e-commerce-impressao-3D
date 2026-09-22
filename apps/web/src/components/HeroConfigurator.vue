@@ -19,7 +19,7 @@ const fileError = ref<string | null>(null)
 const materialId = ref<string | null>(null)
 const layerHeightId = ref<string | null>(null)
 const colorId = ref<string | null>(null)
-const quantity = ref(3)
+const quantity = ref(1)
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 const submittedId = ref<string | null>(null)
@@ -246,7 +246,7 @@ async function onSubmit() {
                 >
                   −
                 </button>
-                <span class="w-8 text-center font-mono text-sm text-ink">{{ quantity }}</span>
+                <output aria-label="Quantidade" class="w-8 text-center font-mono text-sm text-ink">{{ quantity }}</output>
                 <button
                   type="button"
                   aria-label="Aumentar"

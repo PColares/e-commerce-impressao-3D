@@ -22,38 +22,36 @@ test.describe('Home — hero e configurador', () => {
     await expect(layerChips).toHaveText(['0.20', '0.12', '0.08'])
   })
 
-  test('abre com PLA, camada 0.12 e quantidade 3 pré-selecionados', async ({ page }) => {
+  test('abre com PLA, camada 0.12 e quantidade 1 pré-selecionados', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'PLA' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('button', { name: '0.12' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.locator('#configurador')).toContainText('3')
+    await expect(page.getByRole('status', { name: 'Quantidade' })).toHaveText('1')
   })
 
   test('calcula a estimativa em formato brasileiro', async ({ page }) => {
     const panel = page.locator('#configurador')
-    // PLA (x1) x camada 0.12 (x1) x 3 unidades x R$58 = R$174,00
-    await expect(panel).toContainText('R$ 174,00')
-    await expect(panel).toContainText('R$ 156,60 no Pix')
-    await expect(panel).toContainText('10x de R$ 17,40')
+    // PLA (x1) x camada 0.12 (x1) x 1 unidade x R$58 = R$58,00
+    await expect(panel).toContainText('R$ 58,00')
+    await expect(panel).toContainText('R$ 52,20 no Pix')
+    await expect(panel).toContainText('10x de R$ 5,80')
   })
 
   test('recalcula o preço ao trocar material e quantidade', async ({ page }) => {
     const panel = page.locator('#configurador')
 
     await page.getByRole('button', { name: 'PETG' }).click()
-    // PETG (x1.25) x 3 x R$58 = R$217,50
-    await expect(panel).toContainText('R$ 217,50')
+    // PETG (x1.25) x 1 x R$58 = R$72,50
+    await expect(panel).toContainText('R$ 72,50')
 
     await page.getByRole('button', { name: 'Aumentar' }).click()
-    // 4 unidades = R$290,00
-    await expect(panel).toContainText('R$ 290,00')
+    // 2 unidades = R$145,00
+    await expect(panel).toContainText('R$ 145,00')
   })
 
   test('não deixa a quantidade cair abaixo de 1', async ({ page }) => {
     const decrease = page.getByRole('button', { name: 'Diminuir' })
     await decrease.click()
-    await decrease.click()
-    await decrease.click()
-    await expect(page.locator('#configurador')).toContainText('1')
+    await expect(page.getByRole('status', { name: 'Quantidade' })).toHaveText('1')
     // 1 unidade de PLA 0.12 = R$58,00
     await expect(page.locator('#configurador')).toContainText('R$ 58,00')
   })

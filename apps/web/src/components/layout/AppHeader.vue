@@ -19,7 +19,7 @@ const sections = [
       <RouterLink to="/" class="flex flex-1 basis-0 items-center gap-2.5">
         <img src="/apple-touch-icon.png" alt="" class="size-7 shrink-0 rounded-[8px]" />
         <span class="font-sans text-[15px] font-semibold tracking-tight text-ink">
-          Crealio<span class="text-copper">.</span>
+          Crealio
         </span>
         <span class="mt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-steel/60">3D</span>
       </RouterLink>
@@ -44,7 +44,10 @@ const sections = [
           >
             Painel
           </RouterLink>
-          <span class="hidden max-w-[12ch] truncate font-mono text-[11px] text-steel/70 lg:inline">
+          <span
+            class="hidden max-w-[24ch] truncate whitespace-nowrap font-mono text-[11px] text-steel/70 lg:inline"
+            :title="auth.user.name"
+          >
             {{ auth.user.name }}
           </span>
           <button

@@ -3,6 +3,8 @@ import { reactive, ref } from 'vue'
 import { ApiError } from '@/lib/api'
 import { useAdminReference, useSaveReference, type Field, type ReferenceKind } from '@/composables/useAdmin'
 import Button from '@/components/ui/Button.vue'
+import ColorField from './ColorField.vue'
+import { normalizeHex } from '@/lib/color'
 
 const props = defineProps<{ kind: ReferenceKind; fields: Field[]; noun: string }>()
 
@@ -21,9 +23,20 @@ function resetNew() {
 }
 resetNew()
 
+class InvalidField extends Error {}
+
 function toBody(values: Record<string, string>) {
   return Object.fromEntries(
-    props.fields.map((field) => [field.key, field.type === 'number' ? Number(values[field.key]) : values[field.key]]),
+    props.fields.map((field) => {
+      const value = values[field.key] ?? ''
+      if (field.type === 'number') return [field.key, Number(value)]
+      if (field.type === 'color') {
+        const hex = normalizeHex(value)
+        if (!hex) throw new InvalidField('Use o formato #RRGGBB (ex: #F5F5F0).')
+        return [field.key, hex]
+      }
+      return [field.key, value]
+    }),
   )
 }
 
@@ -33,7 +46,8 @@ async function run(action: () => Promise<unknown>) {
     await action()
     return true
   } catch (e) {
-    error.value = e instanceof ApiError ? String(e.message) : 'Não foi possível salvar.'
+    error.value =
+      e instanceof ApiError || e instanceof InvalidField ? String(e.message) : 'Não foi possível salvar.'
     return false
   }
 }
@@ -68,7 +82,7 @@ const fieldClass =
     <p v-if="error" class="mt-3 font-mono text-[11px] text-red-600">{{ error }}</p>
     <p v-if="isPending" class="mt-6 font-mono text-[11px] text-steel/70">Carregando…</p>
 
-    <div v-else class="mt-5 overflow-x-auto rounded-[16px] ring-1 ring-line">
+    <div v-else class="relative mt-5 overflow-x-auto rounded-[16px] ring-1 ring-line">
       <table class="w-full min-w-[560px] text-left font-sans text-sm">
         <thead class="bg-cream font-mono text-[11px] uppercase tracking-[0.12em] text-steel/70">
           <tr>
@@ -81,12 +95,14 @@ const fieldClass =
           <tr v-for="row in rows" :key="row.id" class="border-t border-line">
             <template v-if="editingId === row.id">
               <td v-for="field in fields" :key="field.key" class="px-4 py-2">
+                <ColorField v-if="field.type === 'color'" v-model="draft[field.key]!" />
                 <input
+                  v-else
                   v-model="draft[field.key]"
                   :type="field.type"
                   :step="field.step"
                   :aria-label="field.label"
-                  :class="field.type === 'color' ? 'h-9 w-14 cursor-pointer' : fieldClass"
+                  :class="fieldClass"
                 />
               </td>
               <td class="px-4 py-2" />
@@ -136,13 +152,15 @@ const fieldClass =
         >
           {{ field.label }}
         </label>
+        <ColorField v-if="field.type === 'color'" :id="`new-${kind}-${field.key}`" v-model="newRow[field.key]!" />
         <input
+          v-else
           :id="`new-${kind}-${field.key}`"
           v-model="newRow[field.key]"
           :type="field.type"
           :step="field.step"
           required
-          :class="field.type === 'color' ? 'h-10 w-16 cursor-pointer' : fieldClass"
+          :class="fieldClass"
         />
       </div>
       <Button type="submit" :disabled="save.isPending.value">Adicionar {{ noun }}</Button>
