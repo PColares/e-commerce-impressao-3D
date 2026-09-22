@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { ApiError } from '@/lib/api'
 import { FAILURE_LABEL, duration, shortDate, type JobStatus } from '@/lib/production'
 import { downloadQuoteFile, useFinishPrint, useMoveJob, type PrintJob } from '@/composables/useProduction'
+import { ORDER_STATUS_LABEL } from '@/lib/orders'
 
 const props = defineProps<{ job: PrintJob }>()
 const emit = defineEmits<{ start: []; fail: []; edit: [] }>()
@@ -64,6 +65,14 @@ const danger = `${action} text-red-700 ring-1 ring-red-700/30 hover:bg-red-50`
 
     <div class="mt-2 flex flex-wrap gap-1.5 font-mono text-[10px] uppercase tracking-[0.1em]">
       <span v-if="job.late" class="rounded-full bg-red-600 px-2 py-0.5 text-paper">Atrasado</span>
+      <span
+        :class="[
+          'rounded-full px-2 py-0.5',
+          job.order.status === 'AWAITING_PAYMENT' ? 'bg-ink/5 text-steel' : 'bg-sage/15 text-sage',
+        ]"
+      >
+        {{ ORDER_STATUS_LABEL[job.order.status]?.label ?? job.order.status }}
+      </span>
       <span v-if="job.priority === 'HIGH'" class="rounded-full bg-copper/15 px-2 py-0.5 text-copper-deep">Alta prioridade</span>
       <span v-if="job.dueDate" class="rounded-full bg-ink/5 px-2 py-0.5 text-steel">Prazo {{ shortDate(job.dueDate) }}</span>
       <span v-if="failureCount" class="rounded-full bg-amber-soft/30 px-2 py-0.5 text-ink">

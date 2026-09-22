@@ -40,6 +40,7 @@ test.describe('Produção', () => {
     const quoteRow = page.getByRole('row').filter({ hasText: fileName })
     await quoteRow.getByRole('button', { name: 'Aprovar' }).click()
     await expect(quoteRow).toContainText('Aprovado')
+    await expect(quoteRow).toContainText('Aguardando pagamento')
     await quoteRow.getByRole('button', { name: 'Mandar para produção' }).click()
     const jobDialog = page.getByRole('dialog', { name: 'Mandar para produção' })
     await expect(jobDialog.getByLabel('Título')).toHaveValue(fileName)
@@ -52,6 +53,7 @@ test.describe('Produção', () => {
     const job = card(page, fileName)
     await expect(column(page, 'Fila').getByRole('article').filter({ hasText: fileName })).toBeVisible()
     await expect(job).toContainText('Atrasado')
+    await expect(job).toContainText('Aguardando pagamento')
 
     // Iniciar na impressora: o job vai para "Imprimindo" e a impressora fica ocupada.
     await job.getByRole('button', { name: 'Iniciar' }).click()

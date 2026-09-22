@@ -142,6 +142,7 @@ enum PaymentMethod {
   PIX
   BOLETO
   CREDIT_CARD
+  ACCOUNT_MONEY // saldo da conta Mercado Pago
 }
 
 enum PaymentStatus {

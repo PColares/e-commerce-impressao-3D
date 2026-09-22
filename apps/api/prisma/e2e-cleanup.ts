@@ -28,6 +28,7 @@ try {
   const testUsers = { user: { email: { endsWith: '@e2e.com' } } };
   // Ordem importa por causa das FKs: jobs (as falhas vão junto) → pedidos → orçamentos → usuários.
   await prisma.printJob.deleteMany({ where: { order: testUsers } });
+  await prisma.payment.deleteMany({ where: { order: testUsers } });
   await prisma.order.deleteMany({ where: testUsers });
   await prisma.printer.deleteMany({ where: { name: { startsWith: 'E2E ' } } });
   // Os modelos 3D enviados nos testes também saem do disco.

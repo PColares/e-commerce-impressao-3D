@@ -37,6 +37,9 @@ const sections = [
 
       <div class="flex flex-1 basis-0 items-center justify-end gap-4">
         <template v-if="auth.user">
+          <RouterLink to="/pedidos" class="hidden font-sans text-sm text-steel transition-colors hover:text-copper sm:inline">
+            Meus pedidos
+          </RouterLink>
           <RouterLink
             v-if="auth.isAdmin"
             to="/admin"
@@ -97,6 +100,14 @@ const sections = [
           @click="mobileOpen = false"
         >
           Ver catálogo completo
+        </RouterLink>
+        <RouterLink
+          v-if="auth.user"
+          to="/pedidos"
+          class="py-2 transition-colors hover:text-copper"
+          @click="mobileOpen = false"
+        >
+          Meus pedidos
         </RouterLink>
         <RouterLink
           v-if="auth.isAdmin"

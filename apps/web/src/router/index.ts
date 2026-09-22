@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import { useAuthStore } from '@/stores/auth'
-import { adminRedirect } from './guards'
+import { adminRedirect, authRedirect } from './guards'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +31,12 @@ const router = createRouter({
       component: () => import('@/views/CatalogoView.vue'),
     },
     {
+      path: '/pedidos',
+      name: 'pedidos',
+      component: () => import('@/views/MyOrdersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: () => import('@/views/AdminView.vue'),
@@ -45,8 +51,11 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to) =>
-  adminRedirect({ requiresAdmin: to.meta.requiresAdmin === true, fullPath: to.fullPath }, useAuthStore().user),
-)
+router.beforeEach((to) => {
+  const { user } = useAuthStore()
+  const auth = authRedirect({ requiresAuth: to.meta.requiresAuth === true, fullPath: to.fullPath }, user)
+  if (auth !== true) return auth
+  return adminRedirect({ requiresAdmin: to.meta.requiresAdmin === true, fullPath: to.fullPath }, user)
+})
 
 export default router

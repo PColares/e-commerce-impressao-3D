@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Payment` MODIFY `method` ENUM('PIX', 'BOLETO', 'CREDIT_CARD', 'ACCOUNT_MONEY') NOT NULL;
+

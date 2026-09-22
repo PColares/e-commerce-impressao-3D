@@ -3,6 +3,7 @@ import {
   calculateQuotePrice,
   quoteRequestSchema,
   MODEL_KEY_PATTERN,
+  pixPrice,
   QUOTE_BASE_PRICE,
   MAX_INSTALLMENTS,
   MAX_MODEL_FILE_SIZE_BYTES,
@@ -129,5 +130,13 @@ describe('quoteRequestSchema', () => {
 describe('limites de arquivo', () => {
   it('o teto de upload é 200MB', () => {
     expect(MAX_MODEL_FILE_SIZE_BYTES).toBe(200 * 1024 * 1024)
+  })
+})
+
+describe('pixPrice', () => {
+  it('aplica o desconto do Pix sobre o valor do pedido, em centavos', () => {
+    expect(pixPrice(58)).toBe(52.2)
+    expect(pixPrice(174)).toBe(156.6)
+    expect(pixPrice(98.61)).toBe(88.75)
   })
 })

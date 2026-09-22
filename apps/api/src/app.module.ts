@@ -12,6 +12,7 @@ import { QuotesModule } from './quotes/quotes.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { ProductionModule } from './production/production.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
 import { UPLOADS_URL_PREFIX, resolveUploadDir } from './storage/local-disk.storage.js';
 
 // Em produção este processo também serve o build do Vue — a Hostinger implanta
@@ -57,6 +58,7 @@ export function resolveSpaDir(): string {
     QuotesModule,
     AdminModule,
     ProductionModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

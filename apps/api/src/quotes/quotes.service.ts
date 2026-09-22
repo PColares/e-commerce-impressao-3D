@@ -48,10 +48,16 @@ export class QuotesService {
     });
   }
 
+  // Inclui o pedido e o pagamento: é o que a página "Meus pedidos" mostra.
   findAllForUser(userId: string) {
     return this.prisma.quote.findMany({
       where: { userId },
-      include: { material: true, layerHeight: true, color: true },
+      include: {
+        material: true,
+        layerHeight: true,
+        color: true,
+        order: { select: { id: true, status: true, totalPrice: true, payment: { select: { status: true, method: true } } } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

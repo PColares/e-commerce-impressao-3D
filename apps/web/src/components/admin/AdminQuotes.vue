@@ -11,6 +11,7 @@ import {
   type AdminQuote,
 } from '@/composables/useProduction'
 import JobFormDialog from './JobFormDialog.vue'
+import { ORDER_STATUS_LABEL } from '@/lib/orders'
 
 const { data: quotes, isPending } = useAdminQuotes()
 const approve = useApproveQuote()
@@ -95,6 +96,15 @@ const statusClass: Record<AdminQuote['status'], string> = {
               <span :class="['rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em]', statusClass[quote.status]]">
                 {{ QUOTE_STATUS_LABEL[quote.status] }}
               </span>
+              <div
+                v-if="quote.order"
+                :class="[
+                  'mt-1 font-mono text-[11px]',
+                  quote.order.status === 'AWAITING_PAYMENT' ? 'text-steel' : 'text-sage',
+                ]"
+              >
+                {{ ORDER_STATUS_LABEL[quote.order.status]?.label ?? quote.order.status }}
+              </div>
               <div v-if="quote.order?._count.printJobs" class="mt-1 font-mono text-[11px] text-copper">
                 Em produção ({{ quote.order._count.printJobs }})
               </div>

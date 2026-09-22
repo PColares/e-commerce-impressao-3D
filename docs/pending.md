@@ -58,7 +58,7 @@ Estado do projeto nesta sessão e o que falta para virar um e-commerce funcional
 - [x] **Produção — fase 1** (2026-09-22): impressoras (status derivado dos jobs + manutenção/offline manual, filamentos carregados por posição, horas impressas, lembrete de manutenção), quadro de jobs (Fila → Preparando → Imprimindo → Acabamento → Conferência → Pronto), prazo com "Atrasado" no fuso de Belém, prioridade e registro de falhas (o job volta para a fila). Regras em `apps/api/src/production/production-rules.ts`.
 - [ ] **Produção — fase 2:** estoque de filamento (bobinas, gramas descontadas ao terminar um job, alerta de estoque baixo) e custo por job (filamento + energia + falhas) para comparar com o preço cobrado.
 - [ ] **Integração com a K2** (a pesquisar com a impressora em mãos): ler status/tempo restante pela rede para preencher o quadro sozinho.
-- [ ] **Integração Mercado Pago:** instalar SDK oficial (`mercadopago`), criar preferência de pagamento no checkout, webhook para atualizar `Payment`/`Order` quando o pagamento for aprovado.
+- [x] **Mercado Pago (Checkout Pro, modo teste)** (2026-09-22): "Meus pedidos" (`/pedidos`) com Pix (−10%, preferência só Pix + saldo MP) e cartão/boleto (até 10x). A confirmação consulta a API do Mercado Pago (volta do checkout, "Já paguei" e webhook) e confere o valor antes de marcar o pedido como pago. Regras em `apps/api/src/payments/payment-rules.ts`.
 - [ ] **BullMQ:** configurar `BullModule` de fato (só a dependência está instalada, nenhuma fila/processor criado ainda) — ex: e-mail de confirmação, notificar admin de novo orçamento.
 - [ ] **Testes do CatalogService:** `AuthService` e `QuotesService` já têm testes unitários; falta cobrir o `CatalogService` (ordenação dos materiais por preço, filtro de `active`).
 

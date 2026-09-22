@@ -169,7 +169,10 @@ async function onSubmit() {
 
           <div v-if="submittedId" class="p-5">
             <p class="font-sans text-sm font-medium text-ink">Orçamento criado com sucesso.</p>
-            <p class="mt-1 font-mono text-[11px] text-steel/60">ID: {{ submittedId }}</p>
+            <p class="mt-1 font-sans text-sm text-steel">
+              Vamos conferir o arquivo. Quando aprovarmos, o pagamento fica disponível em
+              <RouterLink to="/pedidos" class="text-copper hover:text-copper-deep">Meus pedidos</RouterLink>.
+            </p>
           </div>
 
           <div v-else class="space-y-5 p-5">

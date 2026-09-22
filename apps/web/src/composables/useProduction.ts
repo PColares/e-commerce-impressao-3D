@@ -73,7 +73,7 @@ export interface PrintJob {
   notes: string | null
   startedAt: string | null
   printer: { id: string; name: string } | null
-  order: { id: string; quoteId: string | null; user: { name: string }; quote: QuoteSummary | null }
+  order: { id: string; quoteId: string | null; status: string; user: { name: string }; quote: QuoteSummary | null }
   failures: PrintFailure[]
 }
 

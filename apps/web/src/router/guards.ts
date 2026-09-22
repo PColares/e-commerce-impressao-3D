@@ -15,3 +15,10 @@ export function adminRedirect(
   if (user.role !== 'ADMIN') return { path: '/' }
   return true
 }
+
+// Páginas do cliente (ex.: /pedidos): quem não está logado vai para o login e
+// volta para a mesma página depois de entrar.
+export function authRedirect(to: { requiresAuth: boolean; fullPath: string }, user: unknown): true | RouteLocationRaw {
+  if (!to.requiresAuth || user) return true
+  return { name: 'login', query: { redirect: to.fullPath } }
+}

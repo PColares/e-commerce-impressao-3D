@@ -41,6 +41,13 @@ pnpm deploy:zip
    - `DATABASE_URL` — MySQL criado no hPanel (ver seção de banco de dados)
    - `JWT_SECRET` — valor longo e aleatório, diferente do de desenvolvimento
    - `PORT` — a Hostinger normalmente injeta; o app respeita essa variável
+   - `MERCADOPAGO_ACCESS_TOKEN` — credencial da **conta de teste** do Mercado Pago (confira a tag
+     `test_user` em `GET https://api.mercadopago.com/users/me`: `APP_USR-` também é o prefixo das
+     credenciais reais). Sem ela o site sobe; só o pagamento fica indisponível.
+   - `APP_URL` — `https://violet-tapir-602845.hostingersite.com`. Com endereço https o Mercado Pago
+     devolve o cliente para `/pedidos` e envia o webhook para `/api/payments/webhook`.
+   - `MERCADOPAGO_WEBHOOK_SECRET` (opcional) — a chave do webhook da aplicação; com ela as
+     notificações sem assinatura válida são recusadas.
 
 > O import por Git (GitHub/GitLab e URL de repositório público) estava **desativado** no painel em
 > 2026-09-16, com o aviso de usar upload. Quando voltar, vale migrar para ele: dá redeploy

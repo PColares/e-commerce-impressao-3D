@@ -65,3 +65,9 @@ export function calculateQuotePrice(
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
+
+// Valor do pedido pago no Pix. Parte do total já salvo no pedido (em reais,
+// com centavos), para o preço mostrado e o cobrado saírem da mesma conta.
+export function pixPrice(total: number): number {
+  return round2(total * (1 - PIX_DISCOUNT_RATE));
+}

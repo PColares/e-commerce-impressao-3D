@@ -147,6 +147,7 @@ export class ProductionService {
           select: {
             id: true,
             quoteId: true,
+            status: true,
             user: { select: { name: true } },
             quote: {
               select: {
