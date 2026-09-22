@@ -88,4 +88,17 @@ describe('useAuthStore', () => {
     expect(auth.token).toBeNull()
     expect(localStorage.getItem('camada.token')).toBeNull()
   })
+
+  it('isAdmin só é verdadeiro para role ADMIN', async () => {
+    post.mockResolvedValue(authResponse)
+    const auth = await freshStore()
+    expect(auth.isAdmin).toBe(false)
+
+    await auth.login({ email: 'a@b.com', password: 'senha1234' })
+    expect(auth.isAdmin).toBe(false)
+
+    post.mockResolvedValue({ ...authResponse, user: { ...authResponse.user, role: 'ADMIN' } })
+    await auth.login({ email: 'a@b.com', password: 'senha1234' })
+    expect(auth.isAdmin).toBe(true)
+  })
 })

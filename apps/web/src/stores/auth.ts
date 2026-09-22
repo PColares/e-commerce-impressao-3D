@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/lib/api'
 
@@ -17,6 +17,8 @@ interface AuthResponse {
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('camada.token'))
   const user = ref<AuthUser | null>(JSON.parse(localStorage.getItem('camada.user') ?? 'null'))
+
+  const isAdmin = computed(() => user.value?.role === 'ADMIN')
 
   function persist(response: AuthResponse) {
     token.value = response.accessToken
@@ -42,5 +44,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('camada.user')
   }
 
-  return { token, user, register, login, logout }
+  return { token, user, isAdmin, register, login, logout }
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/lib/api'
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -21,7 +22,13 @@ async function onSubmit() {
   loading.value = true
   try {
     await auth.login({ email: email.value, password: password.value })
-    router.push({ path: '/', hash: '#orcamento' })
+    // Só caminhos internos: um ?redirect=https://... viraria um redirecionamento aberto.
+    const redirect = route.query.redirect
+    if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
+      router.push(redirect)
+    } else {
+      router.push({ path: '/', hash: '#orcamento' })
+    }
   } catch (e) {
     error.value = e instanceof ApiError ? e.message : 'Não foi possível entrar.'
   } finally {

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { useAuthStore } from '@/stores/auth'
+import { adminRedirect } from './guards'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +30,12 @@ const router = createRouter({
       name: 'catalogo',
       component: () => import('@/views/CatalogoView.vue'),
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+      meta: { requiresAdmin: true },
+    },
   ],
   scrollBehavior(to, _from, savedPosition) {
     if (to.hash) {
@@ -36,5 +44,9 @@ const router = createRouter({
     return savedPosition ?? { top: 0 }
   },
 })
+
+router.beforeEach((to) =>
+  adminRedirect({ requiresAdmin: to.meta.requiresAdmin === true, fullPath: to.fullPath }, useAuthStore().user),
+)
 
 export default router

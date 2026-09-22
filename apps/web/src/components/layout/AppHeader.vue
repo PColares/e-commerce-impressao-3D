@@ -42,6 +42,13 @@ const sections = [
 
       <div class="flex flex-1 basis-0 items-center justify-end gap-4">
         <template v-if="auth.user">
+          <RouterLink
+            v-if="auth.isAdmin"
+            to="/admin"
+            class="font-sans text-sm text-copper transition-colors hover:text-copper-deep"
+          >
+            Painel
+          </RouterLink>
           <span class="hidden max-w-[12ch] truncate font-mono text-[11px] text-steel/70 lg:inline">
             {{ auth.user.name }}
           </span>
@@ -92,6 +99,14 @@ const sections = [
           @click="mobileOpen = false"
         >
           Ver catálogo completo
+        </RouterLink>
+        <RouterLink
+          v-if="auth.isAdmin"
+          to="/admin"
+          class="py-2 text-copper transition-colors hover:text-copper-deep"
+          @click="mobileOpen = false"
+        >
+          Painel
         </RouterLink>
       </div>
     </nav>

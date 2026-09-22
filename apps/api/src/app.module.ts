@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CatalogModule } from './catalog/catalog.module.js';
 import { QuotesModule } from './quotes/quotes.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 // Em produção este processo também serve o build do Vue — a Hostinger implanta
 // um único app Node. Em desenvolvimento quem serve o front é o Vite.
@@ -42,6 +43,7 @@ export function resolveSpaDir(): string {
     AuthModule,
     CatalogModule,
     QuotesModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
